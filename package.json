@@ -1,0 +1,40 @@
+{
+  "name": "anvil-connect-nodejs",
+  "version": "0.0.0",
+  "description": "Nodejs SDK for Anvil Connect",
+  "author": {
+    "name": "Christian Smith",
+    "email": "smith@anvil.io",
+    "url": "http://anvil.io"
+  },
+  "contributors": [
+    {
+      "name": "Tom Kersten",
+      "email": "tom@whitespur.com",
+      "url": "http://tomkersten.com"
+    }
+  ],
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --compilers coffee:coffee-script/register -R spec --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/christiansmith/anvil-connect-nodejs.git"
+  },
+  "keywords": [
+    "OpenID",
+    "OpenID Connect",
+    "OAuth",
+    "OAuth 2.0",
+    "Anvil",
+    "Anvil Connect",
+    "Authentication",
+    "Authorization"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/christiansmith/anvil-connect-nodejs/issues"
+  },
+  "homepage": "https://github.com/christiansmith/anvil-connect-nodejs"
+}
