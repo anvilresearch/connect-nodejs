@@ -36,5 +36,18 @@
   "bugs": {
     "url": "https://github.com/christiansmith/anvil-connect-nodejs/issues"
   },
-  "homepage": "https://github.com/christiansmith/anvil-connect-nodejs"
+  "homepage": "https://github.com/christiansmith/anvil-connect-nodejs",
+  "dependencies": {
+    "jwa": "0.0.2",
+    "base64url": "0.0.6",
+    "lodash": "~2.4.1",
+    "uri-js": "~1.4.2",
+    "form-urlencoded": "0.0.6",
+    "request": "~2.34.0"
+  },
+  "devDependencies": {
+    "chai": "~1.9.1",
+    "sinon": "~1.9.1",
+    "sinon-chai": "~2.5.0"
+  }
 }
