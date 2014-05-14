@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "chai": "~1.9.1",
+    "coffee-script": "^1.7.1",
     "sinon": "~1.9.1",
     "sinon-chai": "~2.5.0"
   }
