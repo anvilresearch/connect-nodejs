@@ -60,22 +60,48 @@ Client.prototype.callback = function (uri, callback) {
   // handle authorization code response
   else if (authResponse.code) {
     request.post({
-      uri: client.provider + '/token',
-      params: {
+      uri: client.providerUri + '/token',
+      headers: {
+        'Authorization': 'Bearer ' + client.clientToken,
+        'Content-type': 'application/json'
+      },
+      form: {
         grant_type:   'authorization_code',
         redirect_uri: client.redirectUri,
         code:         authResponse.code
       }
-    }, function (err, res, tokenResponse) {
+    }, function (err, res, body) {
       if (err) { return callback(err); }
+
+      try {
+        var tokenResponse;
+
+        if (typeof body === 'string') {
+          tokenResponse= JSON.parse(body);
+        } else {
+          tokenResponse = body;
+        }
+
+      } catch (e) {
+        return callback(new Error('Unable to parse token response'))
+      }
+
+
+      if (res.statusCode === 403) {
+        return callback(new Error('You hoser'));
+      }
 
       // error response
       if (tokenResponse.error) {
-        return callback(new Error(tokenResponse.error));
+        var err = new Error();
+        err.error = tokenResponse.error
+        err.error_description = tokenResponse.error_description
+        return callback(err);
       }
 
       // access token response
       else {
+
         var idToken = IDToken.decode(tokenResponse.id_token, publicKey);
 
         // can't verify token
