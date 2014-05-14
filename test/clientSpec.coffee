@@ -25,6 +25,11 @@ publicKey   = fs.readFileSync(
                 path.join(cwd, 'test/lib/keys/public.pem')
               ).toString('ascii')
 
+# Used to verify errors when ID Token is not verifiable
+anotherPrivateKey = fs.readFileSync(
+                path.join(cwd, 'test/lib/keys/anotherPrivate.pem')
+              ).toString('ascii')
+
 Anvil   = require '../index'
 Client  = Anvil.Client
 IDToken = require path.join(cwd, './lib/IDToken')
@@ -164,7 +169,7 @@ describe 'Client', ->
           tokenResponse =
             access_token:  'accessTokenReturned'
             refresh_token: 'refreshToken'
-            id_token:      idToken.encode('randomChars')
+            id_token:      idToken.encode(anotherPrivateKey)
             expires_in:    '3600'
 
           sinon.stub(request, 'post').callsArgWith(1, null, {}, tokenResponse)
