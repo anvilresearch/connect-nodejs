@@ -385,3 +385,66 @@ describe 'Client', ->
           res.idToken.payload.sub.should.equal idToken.payload.sub
 
     describe 'with other response', ->
+
+
+
+  describe 'userinfo', ->
+    {err, res, userInfoResponse} = {}
+
+    describe 'with valid request', ->
+
+      before (done) ->
+        userInfoResponse = '{
+          "sub":"864c393b-053f-4df6-b477-4879d3666a6e",
+          "name":"John Smith",
+          "given_name":"John",
+          "family_name":"Smith",
+          "profile":"https://plus.google.com/+JohnSmith",
+          "picture":"https://lh5.googleusercontent.com/***/photo.jpg",
+          "email":"john.smith@example.com",
+          "email_verified":true,
+          "gender":"male",
+          "locale":"en",
+          "joined_at":1398460767489,
+          "updated_at":1398488442216
+        }'
+
+        sinon.stub(request, 'get').callsArgWith(1, null, {}, userInfoResponse)
+
+        client.userInfo 'aToken', (error, response) ->
+          res = response
+          err = error
+          done()
+
+      after ->
+        request.get.restore()
+
+      it 'should provide a null error', ->
+        expect(err).to.be.null
+
+      it 'should provide user info', ->
+        res.should.eql(JSON.parse(userInfoResponse))
+
+    describe 'with invalid request', ->
+
+      before (done) ->
+        errorResponse = '{"error": "some error"}'
+
+        sinon.stub(request, 'get').callsArgWith(1, null, {}, errorResponse)
+
+        client.userInfo 'aToken', (error, response) ->
+          res = response
+          err = error
+          done()
+
+      after ->
+        request.get.restore()
+
+      it 'should provide a null error', ->
+        expect(err).to.be.instanceOf(Error)
+
+      it 'should not provide user info', ->
+        expect(res).to.be.undefined
+
+
+

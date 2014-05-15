@@ -154,6 +154,55 @@ Client.prototype.callback = function (uri, callback) {
 
 
 /**
+ * UserInfo
+ */
+
+Client.prototype.userInfo = function (accessToken, callback) {
+  var client = this;
+
+  request.get({
+    uri: client.providerUri + '/userinfo',
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    }
+  },
+  function(err, res, body) {
+    if(err) {return callback(err);}
+
+    try {
+      var response = JSON.parse(body);
+    } catch (e) {
+      return callback(e);
+    }
+
+    if(response.error) {
+      return callback(new Error(response.error));
+    }
+
+    return callback(null, response);
+  });
+};
+
+
+/**
+ * Verify Token Middleware
+ */
+
+Client.prototype.authorize = function (scope) {
+  return function (req, res, next) {
+
+    var header = req.headers.authorization;
+
+    if (!header || header.indexOf('Bearer') !== -1) {
+
+    }
+    // if jwt, decode
+    // otherwise, verify with auth server
+  };
+}
+
+
+/**
  * Export
  */
 
