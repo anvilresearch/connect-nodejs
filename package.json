@@ -43,12 +43,15 @@
     "lodash": "~2.4.1",
     "uri-js": "~1.4.2",
     "form-urlencoded": "0.0.6",
-    "request": "~2.34.0"
+    "request": "~2.34.0",
+    "superagent": "~0.18.0",
+    "async": "~0.9.0"
   },
   "devDependencies": {
     "chai": "~1.9.1",
     "coffee-script": "^1.7.1",
     "sinon": "~1.9.1",
-    "sinon-chai": "~2.5.0"
+    "sinon-chai": "~2.5.0",
+    "nock": "~0.31.1"
   }
 }
