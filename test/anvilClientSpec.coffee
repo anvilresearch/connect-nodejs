@@ -387,7 +387,7 @@ describe 'Anvil Client SDK', ->
     describe 'with missing bearer token', ->
 
       before (done) ->
-        req = { headers: {} }
+        req = { headers: {}, query: {}, body: {} }
         res = {}
         next = sinon.spy (error) ->
           err = error

@@ -56,6 +56,7 @@ module.exports = {
    */
 
   configure: function (options) {
+
     // validate configuration
     if (!options) {
       throw new Error('A valid configuration is required.');
@@ -77,10 +78,6 @@ module.exports = {
       throw new Error('A valid client configuration is required');
     }
 
-    //if (!options.client.uri) {
-    //  throw new Error('Client uri is required');
-    //}
-
     if (!options.client.id) {
       throw new Error('Client ID is required');
     }
@@ -97,6 +94,7 @@ module.exports = {
       throw new Error('Redirect URI is required');
     }
 
+
     // default values
     if (!options.params.responseType) {
       options.params.responseType = 'code';
@@ -105,7 +103,6 @@ module.exports = {
     if (!options.params.scope) {
       options.params.scope = 'openid profile';
     }
-
 
 
     // initialize settings
@@ -222,12 +219,22 @@ module.exports = {
    * Callback Handler
    *
    *    anvil.callback(req.url, function (err, authorization) {
-   *      // authorization.access_token
-   *      // authorization.access_token_payload
-   *      // authorization.refresh_token
-   *      // authorization.expires_in
-   *      // authorization.id_token
-   *      // authorization.id_token_payload
+   *
+   *      // `authorization.tokens` contains the auth server's token endpoint response
+   *      //
+   *      //    authorization.tokens.access_token
+   *      //    authorization.tokens.refresh_token
+   *      //    authorization.tokens.expires_in
+   *      //    authorization.tokens.id_token
+   *
+   *      // `authorization.identity` contains the decoded and verified claims of the id_token
+   *      //
+   *      //    authorization.identity.iss
+   *      //    authorization.identity.sub
+   *      //    authorization.identity.aud
+   *      //    authorization.identity.exp
+   *      //    authorization.identity.iat
+   *
    *    });
    *
    * Can this be used inside a Passport Strategy?
@@ -299,8 +306,32 @@ module.exports = {
   /**
    * UserInfo
    *
-   *    anvil.userInfo(accesstoken, function (err, profile) {
-   *      // ...
+   *    anvil.userInfo(accessToken, function (err, info) {
+   *
+   *      // `info` contains basic account information for the user
+   *      // represented by the accessToken argument.
+   *      //
+   *      //    info.sub
+   *      //    info.name
+   *      //    info.given_name
+   *      //    info.family_name
+   *      //    info.middle_name
+   *      //    info.nickname
+   *      //    info.perferred_username
+   *      //    info.profile
+   *      //    info.picture
+   *      //    info.website
+   *      //    info.email
+   *      //    info.email_verified
+   *      //    info.gender
+   *      //    info.birthdate
+   *      //    info.zoneinfo
+   *      //    info.locale
+   *      //    info.phone_number
+   *      //    info.phone_number_verified
+   *      //    info.address
+   *      //    info.updated_at
+   *
    *    });
    */
 
@@ -333,13 +364,16 @@ module.exports = {
   /**
    * Verify credentials at API endpoints
    *
+   * This should comply with RFC6750:
+   * http://tools.ietf.org/html/rfc6750
+   *
    * Use as route specific middleware:
    *
-   *    server.post('/protected',
-   *      anvil.verify({ scope: 'research' }),
-   *      function (req, res, next) {
-   *        // handle the request
-   *      });
+   *    var authorize = anvil.verify({ scope: 'research' });
+   *
+   *    server.post('/protected', authorize, function (req, res, next) {
+   *      // handle the request
+   *    });
    *
    * Or protect the entire server:
    *
@@ -357,10 +391,25 @@ module.exports = {
       ;
 
     return function (req, res, next) {
-      var header = req.headers.authorization;
 
-      // missing header
-      if (!header || header.indexOf('Bearer') === -1) {
+      // try to find an access token for the request
+      var accessToken = (
+
+          // Authorization Request Header Field
+          req.headers.authorization
+       && req.headers.authorization.replace('Bearer ', '')
+
+          // URI Query Parameter
+       || req.query.access_token
+
+          // Form-Encoded Body Parameter
+       || req.headers['content-type'] === 'application/x-www-form-urlencoded'
+       && req.query.body
+
+      );
+
+      // Missing access token
+      if (!accessToken) {
         return next(new UnauthorizedError({
           realm:              'user',
           error:              'invalid_request',
@@ -369,11 +418,11 @@ module.exports = {
         }));
       }
 
-      // header found
+      // Access token found
       else {
-        AccessToken.verify(header.replace('Bearer ', ''), {
+        AccessToken.verify(accessToken, {
 
-          // token validation requirements
+          // Token validation parameters
           jwt:    client.token,
           key:    provider.key,
           iss:    provider.uri,
@@ -381,23 +430,20 @@ module.exports = {
           scope:  scope
 
         }, function (err, token) {
-          // validation error
+
+          // Validation error
           if (err) {
             return next(err);
           }
 
-          // make the token metadata available downstream
+          // Make the token metadata available downstream
           req.token = token;
           next();
+
         });
       }
     }
-  },
-
-
-  /**
-   * The End
-   */
+  }
 
 };
 
