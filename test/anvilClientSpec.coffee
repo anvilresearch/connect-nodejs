@@ -288,10 +288,10 @@ describe 'Anvil Client SDK', ->
         expect(err).to.be.null
 
       it 'should provide the authorization response', ->
-        auth.response.id_token.should.equal idToken
+        auth.authorization.id_token.should.equal idToken
 
       it 'should provide the id token claims', ->
-        auth.idClaims.sub.should.equal 'uuid'
+        auth.identity.sub.should.equal 'uuid'
 
 
 

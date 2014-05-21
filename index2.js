@@ -257,7 +257,6 @@ module.exports = {
     request
       .post(provider.uri + '/token')
       .set('Authorization', 'Bearer ' + client.token)
-      .set('Content-Type',  'application/json')
       .send(tokenRequest)
       .end(function (err, tokenResponse) {
         // superagent error
@@ -272,10 +271,10 @@ module.exports = {
 
         // Successful token response
         else {
-          IDToken.verify(tokenResponse.id_token, {
+          IDToken.verify(tokenResponse.body.id_token, {
 
             iss: provider.uri,
-            aud: client.uri,
+            aud: client.id,
             key: provider.key
 
           }, function (err, token) {
@@ -287,8 +286,8 @@ module.exports = {
 
             // success response
             callback(null, {
-              response: tokenResponse.body,
-              idClaims: token.payload
+              authorization: tokenResponse.body,
+              identity: token.payload
             });
 
           });
