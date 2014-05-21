@@ -350,6 +350,7 @@ module.exports = {
   verify: function (options) {
     var anvil     = this
       , provider  = anvil.provider
+      , client    = anvil.client
       , options   = options || {}
       , scope     = options.scope
       , key       = provider.key
@@ -373,6 +374,7 @@ module.exports = {
         AccessToken.verify(header.replace('Bearer ', ''), {
 
           // token validation requirements
+          jwt:    client.token,
           key:    provider.key,
           iss:    provider.uri,
           aud:    req.connection.remoteAddr,
