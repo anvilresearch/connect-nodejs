@@ -286,7 +286,7 @@ module.exports = {
 
             // success response
             callback(null, {
-              authorization: tokenResponse.body,
+              tokens: tokenResponse.body,
               identity: token.payload
             });
 
@@ -377,7 +377,7 @@ module.exports = {
           jwt:    client.token,
           key:    provider.key,
           iss:    provider.uri,
-          aud:    req.connection.remoteAddr,
+          aud:    client.id,
           scope:  scope
 
         }, function (err, token) {
