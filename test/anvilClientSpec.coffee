@@ -32,11 +32,11 @@ anotherPrivateKey = fs.readFileSync(
               ).toString('ascii')
 
 
-anvil   = require '../index2'
-CallbackError = require path.join(cwd, './errors/CallbackError')
+anvil             = require '../index2'
+IDToken           = require path.join(cwd, './lib/IDToken')
+AccessToken       = require path.join(cwd, './lib/AccessToken')
+CallbackError     = require path.join(cwd, './errors/CallbackError')
 UnauthorizedError = require path.join(cwd, './errors/UnauthorizedError')
-IDToken = require path.join(cwd, './lib/IDToken')
-AccessToken = require path.join(cwd, './lib/AccessToken')
 
 
 
@@ -401,6 +401,79 @@ describe 'Anvil Client SDK', ->
 
 
 
+    describe 'with malformed authorization header',->
+
+      before (done) ->
+        req = headers: { authorization: 'Bearer malformed token' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof UnauthorizedError
+
+
+
+
+    describe 'with invalid authorization scheme', ->
+
+      before (done) ->
+        req = headers: { authorization: 'WRONG scheme' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof UnauthorizedError
+
+
+
+
+    describe 'with multiple access tokens', ->
+
+      before (done) ->
+          req =
+            headers: { authorization: 'Bearer duplicate' }
+            query: { access_token: 'alsoduplicate' }
+          res = {}
+          next = sinon.spy (error) ->
+            err = error
+            done()
+
+          anvil.verify({ scope: 'realm' })(req, res, next)
+
+        it 'should provide an error', ->
+          expect(err).to.be.instanceof UnauthorizedError
+
+
+
+
+    describe 'with request body access token and invalid content type', ->
+
+      before (done) ->
+        req =
+          headers: { 'content-type': 'application/wrong' }
+          body: { access_token: '1234' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      it 'should provide an error', ->
+        console.log(err)
+        expect(err).to.be.instanceof UnauthorizedError
+
+
+
+
     describe 'with invalid access token', ->
 
       before (done) ->
@@ -410,8 +483,6 @@ describe 'Anvil Client SDK', ->
         req =
           headers:
             authorization: 'Bearer INVALID.TOKEN'
-          connection:
-            remoteAddr: ''
         res = {}
         next = sinon.spy (error) ->
           err = error
@@ -438,8 +509,6 @@ describe 'Anvil Client SDK', ->
         req =
           headers:
             authorization: 'Bearer VALID.TOKEN'
-          connection:
-            remoteAddr: ''
         res = {}
         next = sinon.spy (error) ->
           err = error

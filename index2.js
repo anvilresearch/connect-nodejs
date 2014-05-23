@@ -391,22 +391,68 @@ module.exports = {
       ;
 
     return function (req, res, next) {
+      var accessToken;
 
-      // try to find an access token for the request
-      var accessToken = (
+      // Check for an access token in the Authorization header
+      if (req.headers && req.headers.authorization) {
+        var components    = req.headers.authorization.split(' ')
+          , scheme        = components[0]
+          , credentials = components[1]
+          ;
 
-          // Authorization Request Header Field
-          req.headers.authorization
-       && req.headers.authorization.replace('Bearer ', '')
+        if (components.length !== 2) {
+          return next(new UnauthorizedError({
+            error:              'invalid_request',
+            error_description:  'Invalid authorization header',
+            statusCode:          400
+          }));
+        }
 
-          // URI Query Parameter
-       || req.query.access_token
+        if (scheme !== 'Bearer') {
+          return next(new UnauthorizedError({
+            error:              'invalid_request',
+            error_description:  'Invalid authorization scheme',
+            statusCode:          400
+          }));
+        }
 
-          // Form-Encoded Body Parameter
-       || req.headers['content-type'] === 'application/x-www-form-urlencoded'
-       && req.query.body
+        accessToken = credentials;
+      }
 
-      );
+      // Check for an access token in the request URI
+      if (req.query && req.query.access_token) {
+        if (accessToken) {
+          return next(new UnauthorizedError({
+            error:              'invalid_request',
+            error_description:  'Multiple authentication methods',
+            statusCode:          400
+          }));
+        }
+
+        token = req.query.access_token
+      }
+
+      // Check for an access token in the request body
+      if (req.body && req.body.access_token) {
+        if (accessToken) {
+          return next(new UnauthorizedError({
+            error:              'invalid_request',
+            error_description:  'Multiple authentication methods',
+            statusCode:          400
+          }));
+        }
+
+        if (req.headers
+         && req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
+          return next(new UnauthorizedError({
+            error:              'invalid_request',
+            error_description:  'Invalid content-type',
+            statusCode:          400
+          }));
+        }
+
+        token = req.body.access_token
+      }
 
       // Missing access token
       if (!accessToken) {
@@ -443,7 +489,10 @@ module.exports = {
         });
       }
     }
-  }
+  },
+
+
+  AccessToken: AccessToken
 
 };
 
