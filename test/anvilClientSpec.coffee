@@ -32,7 +32,7 @@ anotherPrivateKey = fs.readFileSync(
               ).toString('ascii')
 
 
-anvil             = require '../index2'
+anvil             = require '../index'
 IDToken           = require path.join(cwd, './lib/IDToken')
 AccessToken       = require path.join(cwd, './lib/AccessToken')
 CallbackError     = require path.join(cwd, './errors/CallbackError')

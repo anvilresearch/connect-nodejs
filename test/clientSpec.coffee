@@ -30,7 +30,7 @@ anotherPrivateKey = fs.readFileSync(
                 path.join(cwd, 'test/lib/keys/anotherPrivate.pem')
               ).toString('ascii')
 
-Anvil   = require '../index'
+Anvil   = require '../index0'
 Client  = Anvil.Client
 IDToken = require path.join(cwd, './lib/IDToken')
 request = require('request')
