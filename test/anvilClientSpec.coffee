@@ -468,8 +468,65 @@ describe 'Anvil Client SDK', ->
         anvil.verify({ scope: 'realm' })(req, res, next)
 
       it 'should provide an error', ->
-        console.log(err)
         expect(err).to.be.instanceof UnauthorizedError
+
+
+
+    describe 'with a valid request body access token', ->
+
+      before (done) ->
+        token = '1234'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, token)
+
+
+        req =
+          headers: { 'content-type': 'application/x-www-form-urlencoded' }
+          body: { access_token: '1234' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      after ->
+        AccessToken.verify.restore()
+
+
+      it 'should not provide an error', ->
+        expect(err).to.be.undefined
+
+      it 'should set the request token', ->
+        req.token.should.equal '1234'
+
+
+
+
+    describe 'with a valid URI query parameter access token', ->
+
+      before (done) ->
+        token = '1234'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, token)
+
+
+        req =
+          query: { access_token: '1234' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      after ->
+        AccessToken.verify.restore()
+
+
+      it 'should not provide an error', ->
+        expect(err).to.be.undefined
+
+      it 'should set the request token', ->
+        req.token.should.equal '1234'
 
 
 

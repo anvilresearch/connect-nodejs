@@ -429,7 +429,7 @@ module.exports = {
           }));
         }
 
-        token = req.query.access_token
+        accessToken = req.query.access_token
       }
 
       // Check for an access token in the request body
@@ -451,7 +451,7 @@ module.exports = {
           }));
         }
 
-        token = req.body.access_token
+        accessToken = req.body.access_token
       }
 
       // Missing access token
