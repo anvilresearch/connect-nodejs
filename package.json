@@ -1,6 +1,6 @@
 {
-  "name": "anvil-connect-nodejs",
-  "version": "0.0.0",
+  "name": "anvil-connect-sdk",
+  "version": "0.1.0",
   "description": "Nodejs SDK for Anvil Connect",
   "author": {
     "name": "Christian Smith",
