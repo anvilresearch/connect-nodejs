@@ -494,7 +494,6 @@ describe 'Anvil Client SDK', ->
 
 
       it 'should not provide an error', ->
-        console.log(err);
         expect(err).to.be.undefined
 
       it 'should set the request token', ->
@@ -524,7 +523,6 @@ describe 'Anvil Client SDK', ->
 
 
       it 'should not provide an error', ->
-        console.log(err);
         expect(err).to.be.undefined
 
       it 'should set the request token', ->
