@@ -451,7 +451,7 @@ module.exports = {
           }));
         }
 
-        token = req.body.access_token
+        accessToken = req.body.access_token
       }
 
       // Missing access token
