@@ -429,7 +429,7 @@ module.exports = {
           }));
         }
 
-        token = req.query.access_token
+        accessToken = req.query.access_token
       }
 
       // Check for an access token in the request body

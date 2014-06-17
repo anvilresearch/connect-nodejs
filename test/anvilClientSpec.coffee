@@ -503,6 +503,36 @@ describe 'Anvil Client SDK', ->
 
 
 
+    describe 'with a valid URI query parameter access token', ->
+
+      before (done) ->
+        token = '1234'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, token)
+
+
+        req =
+          query: { access_token: '1234' }
+        res = {}
+        next = sinon.spy (error) ->
+          err = error
+          done()
+
+        anvil.verify({ scope: 'realm' })(req, res, next)
+
+      after ->
+        AccessToken.verify.restore()
+
+
+      it 'should not provide an error', ->
+        console.log(err);
+        expect(err).to.be.undefined
+
+      it 'should set the request token', ->
+        req.token.should.equal '1234'
+
+
+
+
     describe 'with invalid access token', ->
 
       before (done) ->
