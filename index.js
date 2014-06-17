@@ -52,6 +52,15 @@ module.exports = {
 
 
   /**
+   * Client whitelist
+   *
+   * If this is undefined, all clients are authorized.
+   */
+
+  clients: undefined,
+
+
+  /**
    * Client Configuration Setter
    */
 
@@ -109,6 +118,7 @@ module.exports = {
     this.provider = options.provider;
     this.client   = options.client;
     this.params   = options.params;
+    this.clients  = options.clients;
   },
 
 
@@ -377,7 +387,13 @@ module.exports = {
    *
    * Or protect the entire server:
    *
-   *    server.use(anvil.verify({ scope: 'research' }));
+   *    server.use(anvil.verify({
+   *      scope: 'research',
+   *      clients: [
+   *        'uuid1',
+   *        'uuid2'
+   *      ]
+   *    }));
    *
    */
 
@@ -386,6 +402,7 @@ module.exports = {
       , provider  = anvil.provider
       , client    = anvil.client
       , options   = options || {}
+      , clients   = options.clients || anvil.clients
       , scope     = options.scope
       , key       = provider.key
       ;
@@ -469,11 +486,11 @@ module.exports = {
         AccessToken.verify(accessToken, {
 
           // Token validation parameters
-          jwt:    client.token,
-          key:    provider.key,
-          iss:    provider.uri,
-          aud:    client.id,
-          scope:  scope
+          jwt:      client.token,
+          key:      provider.key,
+          iss:      provider.uri,
+          clients:  clients,
+          scope:    scope
 
         }, function (err, token) {
 
