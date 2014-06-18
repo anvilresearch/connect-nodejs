@@ -8,7 +8,6 @@ var URL               = require('url')
   , IDToken           = require('./lib/IDToken')
   , AccessToken       = require('./lib/AccessToken')
   , UnauthorizedError = require('./errors/UnauthorizedError')
-  //, UserInfoError     = require('./lib/UserInfoError')
   , FormUrlencoded    = require('form-urlencoded')
   ;
 
@@ -488,7 +487,7 @@ module.exports = {
           // Token validation parameters
           jwt:      client.token,
           key:      provider.key,
-          iss:      provider.uri,
+          issuer:   provider.uri,
           clients:  clients,
           scope:    scope
 
