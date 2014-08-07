@@ -35,7 +35,7 @@ module.exports = {
 
   client: {
     // id
-    // token
+    // secret
   },
 
 
@@ -90,27 +90,27 @@ module.exports = {
       throw new Error('Client ID is required');
     }
 
-    if (!options.client.token) {
-      throw new Error('Client token is required');
-    }
+    //if (!options.client.token) {
+    //  throw new Error('Client token is required');
+    //}
 
-    if (!options.params) {
-      throw new Error('Valid authorization params configuration is required');
-    }
+    //if (!options.params) {
+    //  throw new Error('Valid authorization params configuration is required');
+    //}
 
-    if (!options.params.redirectUri) {
-      throw new Error('Redirect URI is required');
-    }
+    //if (!options.params.redirectUri) {
+    //  throw new Error('Redirect URI is required');
+    //}
 
 
-    // default values
-    if (!options.params.responseType) {
-      options.params.responseType = 'code';
-    }
+    //// default values
+    //if (!options.params.responseType) {
+    //  options.params.responseType = 'code';
+    //}
 
-    if (!options.params.scope) {
-      options.params.scope = 'openid profile';
-    }
+    //if (!options.params.scope) {
+    //  options.params.scope = 'openid profile';
+    //}
 
 
     // initialize settings
@@ -485,7 +485,8 @@ module.exports = {
         AccessToken.verify(accessToken, {
 
           // Token validation parameters
-          jwt:      client.token,
+          //jwt:      client.token,
+          client:   client,
           key:      provider.key,
           issuer:   provider.uri,
           clients:  clients,
