@@ -20,7 +20,7 @@ chai.should()
 # Code under test
 IDToken = require path.join cwd, 'lib/IDToken'
 IDTokenError = require path.join cwd, 'lib/IDTokenError'
-JWT = require path.join cwd, 'lib/JWT'
+JWT = require 'anvil-connect-jwt'
 base64url = require 'base64url'
 
 
