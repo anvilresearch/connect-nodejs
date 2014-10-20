@@ -146,7 +146,7 @@ module.exports = {
       response_type: options.responseType || params.responseType || 'code',
       redirect_uri:  options.redirectUri  || params.redirectUri,
       client_id:     options.clientId     || client.id,
-      scope:         options.scope        || params.scope
+      scope:         options.scope        || params.scope || 'openid profile'
     };
 
     // optionally add state onto params
