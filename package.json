@@ -38,7 +38,7 @@
   },
   "homepage": "https://github.com/christiansmith/anvil-connect-nodejs",
   "dependencies": {
-    "anvil-connect-jwt": "^0.1.0",
+    "anvil-connect-jwt": "^0.1.1",
     "async": "~0.9.0",
     "base64url": "0.0.6",
     "form-urlencoded": "0.0.6",
