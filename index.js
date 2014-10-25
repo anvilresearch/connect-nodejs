@@ -79,7 +79,21 @@ module.exports = {
     }
 
     if (!options.provider.key) {
-      throw new Error('Provider public key is required');
+      request
+        .get(options.provider.uri + '/jwks')
+        .end(function (err, response) {
+          if (err) {
+            throw new Error(
+              "Can't find the signing key. Check your provider uri configuration."
+            );
+          }
+
+          response.body.forEach(function (jwk) {
+            if (jwk && jwk.use === 'sig') {
+              options.provider.key = jwk;
+            }
+          })
+        });
     }
 
     if (!options.client) {
