@@ -88,7 +88,13 @@ module.exports = {
             );
           }
 
-          response.body.forEach(function (jwk) {
+          if (!(response.body && response.body.keys)) {
+            throw new Error(
+              "Can't parse JWK endpoint response."
+            );
+          }
+
+          response.body.keys.forEach(function (jwk) {
             if (jwk && jwk.use === 'sig') {
               options.provider.key = jwk;
             }
