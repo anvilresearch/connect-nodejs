@@ -89,13 +89,20 @@ module.exports = {
             );
           }
 
-          if (!(response.body && response.body.keys)) {
+          var jwks;
+          if (Array.isArray(response.body)) {
+            jwks = response.body;
+          } else if (response.body && response.body.keys) {
+            jwks = response.body.keys;
+          }
+
+          if (!jwks) {
             throw new Error(
               "Can't parse JWK endpoint response."
             );
           }
 
-          response.body.keys.forEach(function (jwk) {
+          jwks.forEach(function (jwk) {
             if (jwk && jwk.use === 'sig') {
               options.provider.key = jwk;
             }
