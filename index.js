@@ -544,7 +544,10 @@ module.exports = {
   },
 
 
-  AccessToken: AccessToken
+  IDToken:            IDToken,
+  AccessToken:        AccessToken,
+  CallbackError:      CallbackError,
+  UnauthorizedError:  UnauthorizedError
 
 };
 
