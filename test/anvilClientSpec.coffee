@@ -289,7 +289,7 @@ describe 'Anvil Client SDK', ->
           .callsArgWith(2, null, { payload: idClaims })
         sinon
           .stub(AccessToken, 'verify')
-          .callsArgWith(2, null, { payload: accessClaims })
+          .callsArgWith(2, null, accessClaims)
 
         anvil.callback "/callback?id_token=#{idToken}&access_token=#{accessToken}", (error, authorization) ->
           err  = error

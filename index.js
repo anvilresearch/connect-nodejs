@@ -335,9 +335,9 @@ module.exports = {
                 client:   client,
                 key:      provider.key,
                 issuer:   provider.uri
-              }, function (err, token) {
+              }, function (err, claims) {
                 if (err) { return done(err); }
-                done(null, token.payload);
+                done(null, claims);
               });
             }
           }, function (err, result) {
