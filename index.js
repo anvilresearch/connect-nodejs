@@ -3,6 +3,7 @@
  */
 
 var URL               = require('url')
+  , async             = require('async')
   , request           = require('superagent')
   , CallbackError     = require('./errors/CallbackError')
   , IDToken           = require('./lib/IDToken')
@@ -275,7 +276,9 @@ module.exports = {
       , client       = anvil.client
       , params       = anvil.params
       , authResponse = URL.parse(uri, true).query
-      ;
+      , credentials  = new Buffer(client.id + ':'
+                     + client.secret).toString('base64')
+                     ;
 
     // handle error response from authorization server
     if (authResponse.error) {
@@ -292,7 +295,7 @@ module.exports = {
     // exchange authorization code for tokens
     request
       .post(provider.uri + '/token')
-      .set('Authorization', 'Bearer ' + client.token)
+      .set('Authorization', 'Basic ' + credentials)
       .send(tokenRequest)
       .end(function (err, tokenResponse) {
         // superagent error
@@ -307,25 +310,37 @@ module.exports = {
 
         // Successful token response
         else {
-          IDToken.verify(tokenResponse.body.id_token, {
 
-            iss: provider.uri,
-            aud: client.id,
-            key: provider.key
+          async.parallel({
+            id_claims: function (done) {
+              IDToken.verify(tokenResponse.body.id_token, {
+                iss: provider.uri,
+                aud: client.id,
+                key: provider.key
+              }, function (err, token) {
+                if (err) { return done(err); }
+                done(null, token.payload);
+              });
+            },
 
-          }, function (err, token) {
-
-            // token error
-            if (err) {
-              return callback(err);
+            access_claims: function (done) {
+              AccessToken.verify(tokenResponse.body.access_token, {
+                client:   client,
+                key:      provider.key,
+                issuer:   provider.uri
+              }, function (err, token) {
+                if (err) { return done(err); }
+                done(null, token.payload);
+              });
             }
+          }, function (err, result) {
+            if (err) { return callback(err); }
 
-            // success response
-            callback(null, {
-              tokens: tokenResponse.body,
-              identity: token.payload
-            });
+            tokenResponse.body.id_claims = result.id_claims;
+            tokenResponse.body.access_claims = result.access_claims;
 
+
+            callback(null, tokenResponse.body);
           });
         }
       });

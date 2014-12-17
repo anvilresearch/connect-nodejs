@@ -259,62 +259,95 @@ describe 'Anvil Client SDK', ->
 
     describe 'with successful token exchange response and valid id token', ->
 
-      {idToken} = {}
+      {idToken,accessToken} = {}
 
       before (done) ->
 
         idToken = 'header.payload.signature'
+        accessToken = 'header.payload.signature'
 
-        claims =
+        idClaims =
+          iss: 'https://your.authorization.server'
+          sub: 'uuid'
+          aud: 'https://your.client.app'
+        accessClaims =
           iss: 'https://your.authorization.server'
           sub: 'uuid'
           aud: 'https://your.client.app'
 
         nock(anvil.provider.uri)
           .post('/token')
-          .reply(200, { id_token: idToken }, { 'Content-Type': 'application/json' })
+          .reply(200, {
+            id_token: idToken
+            access_token: accessToken
+          }, {
+            'Content-Type': 'application/json'
+          })
 
-        sinon.stub(IDToken, 'verify').callsArgWith(2, null, { payload: claims })
+        sinon
+          .stub(IDToken, 'verify')
+          .callsArgWith(2, null, { payload: idClaims })
+        sinon
+          .stub(AccessToken, 'verify')
+          .callsArgWith(2, null, { payload: accessClaims })
 
-        anvil.callback "/callback?id_token=#{idToken}", (error, authorization) ->
+        anvil.callback "/callback?id_token=#{idToken}&access_token=#{accessToken}", (error, authorization) ->
           err  = error
           auth = authorization
           done()
 
       after ->
         IDToken.verify.restore()
+        AccessToken.verify.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
 
-      it 'should provide the authorization response', ->
-        auth.tokens.id_token.should.equal idToken
+      it 'should provide the id token', ->
+        auth.id_token.should.equal idToken
 
       it 'should provide the id token claims', ->
-        auth.identity.sub.should.equal 'uuid'
+        auth.id_claims.sub.should.equal 'uuid'
+
+      it 'should provide the access token', ->
+        auth.access_token.should.equal accessToken
+
+      it 'should provide the access token claims', ->
+        auth.access_claims.sub.should.equal 'uuid'
+
 
 
 
     describe 'with successful token exchange response and invalid id token', ->
 
-      {idToken} = {}
+      {idToken,accessToken} = {}
 
       before (done) ->
 
         idToken = 'header.payload.signature'
+        accessToken = 'header.payload.signature'
 
-        claims =
+        idClaims =
+          iss: 'https://your.authorization.server'
+          sub: 'uuid'
+          aud: 'https://your.client.app'
+        accessClaims =
           iss: 'https://your.authorization.server'
           sub: 'uuid'
           aud: 'https://your.client.app'
 
         nock(anvil.provider.uri)
           .post('/token')
-          .reply(200, { id_token: idToken }, { 'Content-Type': 'application/json' })
+          .reply(200, {
+            id_token: idToken
+            access_token: accessToken
+          }, {
+            'Content-Type': 'application/json'
+          })
 
         sinon.stub(IDToken, 'verify').callsArgWith(2, new Error())
 
-        anvil.callback "/callback?id_token=#{idToken}", (error, authorization) ->
+        anvil.callback "/callback?id_token=#{idToken}&access_token=#{accessToken}", (error, authorization) ->
           err  = error
           auth = authorization
           done()
