@@ -22,6 +22,7 @@ IDToken = require path.join cwd, 'lib/IDToken'
 IDTokenError = require path.join cwd, 'lib/IDTokenError'
 JWT = require 'anvil-connect-jwt'
 base64url = require 'base64url'
+nowSeconds = require(path.join cwd, 'lib/time-utils').nowSeconds
 
 
 
@@ -375,7 +376,7 @@ describe 'ID Token', ->
         payload =
           iss: 'https://your.authorization.server'
           sub: 'uuid'
-          exp: Date.now() - 1000
+          exp: nowSeconds(-1000)
           aud: 'https://your.client.app'
 
         jwt = (new IDToken payload).encode(privateKey)
