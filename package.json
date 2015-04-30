@@ -1,7 +1,7 @@
 {
-  "name": "anvil-connect-sdk",
+  "name": "anvil-connect-nodejs",
   "version": "0.1.11",
-  "description": "Nodejs SDK for Anvil Connect",
+  "description": "Anvil Connect JavaScript client for Node.js",
   "author": {
     "name": "Christian Smith",
     "email": "smith@anvil.io",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/christiansmith/anvil-connect-nodejs.git"
+    "url": "https://github.com/anvilresearch/connect-nodejs.git"
   },
   "keywords": [
     "OpenID",
@@ -34,9 +34,9 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/christiansmith/anvil-connect-nodejs/issues"
+    "url": "https://github.com/anvilresearch/connect-nodejs/issues"
   },
-  "homepage": "https://github.com/christiansmith/anvil-connect-nodejs",
+  "homepage": "https://github.com/anvilresearch/connect-nodejs",
   "dependencies": {
     "anvil-connect-jwt": "^0.1.2",
     "async": "~0.9.0",
