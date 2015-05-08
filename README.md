@@ -1,12 +1,12 @@
 # Node SDK for Anvil Connect
 
-**[Anvil Connect](https://github.com/christiansmith/anvil-connect)** aims to be a scalable, full-featured, ready-to-run [**OpenID Connect**](http://openid.net/connect/) + [**OAuth 2.0**](http://tools.ietf.org/html/rfc6749) **Provider**. This package is a SDK for Nodejs client developers.
+**[Anvil Connect](https://github.com/anvilresearch/connect)** aims to be a scalable, full-featured, ready-to-run [**OpenID Connect**](http://openid.net/connect/) + [**OAuth 2.0**](http://tools.ietf.org/html/rfc6749) **Provider**. This package is a Nodejs client.
 
 
 ### Install
 
 ```bash
-$ npm install anvil-connect-sdk --save
+$ npm install anvil-connect-nodejs --save
 ```
 
 ### Usage
@@ -14,7 +14,7 @@ $ npm install anvil-connect-sdk --save
 Configuration example:
 
 ```javascript
-var anvil = require('anvil-connect-sdk');
+var anvil = require('anvil-connect-nodejs');
 
 anvil.configure({
   provider: {
@@ -34,7 +34,7 @@ anvil.configure({
 
 ### Protecting Services
 
-Anvil Connect SDK includes Connect/Express/Restify compatible middleware for authenticating access tokens issued by Anvil Connect and enforcing authorization based on OAuth 2.0 scope.
+This package includes Connect/Express/Restify compatible middleware for authenticating access tokens issued by Anvil Connect and enforcing authorization based on OAuth 2.0 scope.
 
 This middleware can be used as route specific middleware...
 
