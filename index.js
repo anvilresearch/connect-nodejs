@@ -3,13 +3,13 @@
  */
 
 var URL               = require('url')
+  , qs                = require('qs')
   , async             = require('async')
   , request           = require('superagent')
   , CallbackError     = require('./errors/CallbackError')
   , IDToken           = require('./lib/IDToken')
   , AccessToken       = require('./lib/AccessToken')
   , UnauthorizedError = require('./errors/UnauthorizedError')
-  , FormUrlencoded    = require('form-urlencoded')
   ;
 
 
@@ -180,7 +180,7 @@ module.exports = {
     // optionally add state onto params
     // and any other options like prompt/display/etc
 
-    return uri + FormUrlencoded.encode(params);
+    return uri + qs.stringify(params);
   },
 
 
@@ -293,7 +293,7 @@ module.exports = {
     }
 
     // token request parameters
-    var tokenRequest = FormUrlencoded.encode({
+    var tokenRequest = qs.stringify({
       grant_type:   'authorization_code',
       redirect_uri:  params.redirectUri,
       code:          authResponse.code
@@ -305,10 +305,6 @@ module.exports = {
       .set('Authorization', 'Basic ' + credentials)
       .send(tokenRequest)
       .end(function (err, tokenResponse) {
-        // superagent error
-        if (err) {
-          return callback(err)
-        }
 
         // Forbidden client or invalid request error
         if (tokenResponse.error) {
@@ -396,11 +392,6 @@ module.exports = {
       .set('Authorization', 'Bearer ' + accessToken)
       .set('Accept',        'application/json')
       .end(function (err, response) {
-        // superagent error
-        if (err) {
-          return callback(err);
-        }
-
         // error response from authorization server
         if (response.error) {
           return callback(new UnauthorizedError(response.body));

@@ -124,10 +124,10 @@ describe 'Anvil Client SDK', ->
       anvil.uri({ clientId: 'other' }).should.contain 'client_id=other'
 
     it 'should use the default scope', ->
-      anvil.uri().should.contain 'scope=openid+profile'
+      anvil.uri().should.contain 'scope=openid%20profile'
 
     it 'should use an optional scope', ->
-      anvil.uri({ scope: 'openid realm' }).should.contain 'scope=openid+realm'
+      anvil.uri({ scope: 'openid realm' }).should.contain 'scope=openid%20realm'
 
     it 'should use a unique request state'
     it 'should use an optional response mode'
