@@ -1,6 +1,6 @@
 {
   "name": "anvil-connect-nodejs",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "Anvil Connect JavaScript client for Node.js",
   "author": {
     "name": "Christian Smith",
