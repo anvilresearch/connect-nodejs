@@ -13,6 +13,7 @@ function UnauthorizedError(options, status) {
   this.name              = 'UnauthorizedError';
   this.error             = options.error;
   this.error_description = options.error_description;
+  this.message           = options.error_description;
   //this.realm             = options.realm;
   //this.scope             = options.scope;
   this.statusCode        = options.statusCode || 401;
