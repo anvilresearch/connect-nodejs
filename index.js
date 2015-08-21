@@ -2,24 +2,20 @@
  * Module dependencies
  */
 
-var URL               = require('url')
-  , qs                = require('qs')
-  , async             = require('async')
-  , request           = require('superagent')
-  , CallbackError     = require('./errors/CallbackError')
-  , IDToken           = require('./lib/IDToken')
-  , AccessToken       = require('./lib/AccessToken')
-  , UnauthorizedError = require('./errors/UnauthorizedError')
-  ;
-
+var URL = require('url')
+var qs = require('qs')
+var async = require('async')
+var request = require('superagent')
+var CallbackError = require('./errors/CallbackError')
+var IDToken = require('./lib/IDToken')
+var AccessToken = require('./lib/AccessToken')
+var UnauthorizedError = require('./errors/UnauthorizedError')
 
 /**
  * Anvil Connect Client
  */
 
 module.exports = {
-
-
   /**
    * Anvil Connect Provider Settings
    */
@@ -29,7 +25,6 @@ module.exports = {
     // key
   },
 
-
   /**
    * Registered Client Settings
    */
@@ -38,7 +33,6 @@ module.exports = {
     // id
     // secret
   },
-
 
   /**
    * Default Authorization Request Params
@@ -50,7 +44,6 @@ module.exports = {
     // scope
   },
 
-
   /**
    * Client whitelist
    *
@@ -59,24 +52,22 @@ module.exports = {
 
   clients: undefined,
 
-
   /**
    * Client Configuration Setter
    */
 
   configure: function (options) {
-
     // validate configuration
     if (!options) {
-      throw new Error('A valid configuration is required.');
+      throw new Error('A valid configuration is required.')
     }
 
     if (!options.provider) {
-      throw new Error('A valid provider configuration is required');
+      throw new Error('A valid provider configuration is required')
     }
 
     if (!options.provider.uri) {
-      throw new Error('Provider uri is required');
+      throw new Error('Provider uri is required')
     }
 
     if (!options.provider.key) {
@@ -86,68 +77,65 @@ module.exports = {
           if (err) {
             throw new Error(
               "Can't find the signing key. Check your provider uri configuration."
-            );
+            )
           }
 
-          var jwks;
+          var jwks
           if (Array.isArray(response.body)) {
-            jwks = response.body;
+            jwks = response.body
           } else if (response.body && response.body.keys) {
-            jwks = response.body.keys;
+            jwks = response.body.keys
           }
 
           if (!jwks) {
             throw new Error(
               "Can't parse JWK endpoint response."
-            );
+            )
           }
 
           jwks.forEach(function (jwk) {
             if (jwk && jwk.use === 'sig') {
-              options.provider.key = jwk;
+              options.provider.key = jwk
             }
           })
-        });
+        })
     }
 
     if (!options.client) {
-      throw new Error('A valid client configuration is required');
+      throw new Error('A valid client configuration is required')
     }
 
     if (!options.client.id) {
-      throw new Error('Client ID is required');
+      throw new Error('Client ID is required')
     }
 
-    //if (!options.client.token) {
-    //  throw new Error('Client token is required');
-    //}
+    // if (!options.client.token) {
+    //  throw new Error('Client token is required')
+    // }
 
-    //if (!options.params) {
-    //  throw new Error('Valid authorization params configuration is required');
-    //}
+    // if (!options.params) {
+    //  throw new Error('Valid authorization params configuration is required')
+    // }
 
-    //if (!options.params.redirectUri) {
-    //  throw new Error('Redirect URI is required');
-    //}
+    // if (!options.params.redirectUri) {
+    //  throw new Error('Redirect URI is required')
+    // }
 
+    // // default values
+    // if (!options.params.responseType) {
+    //  options.params.responseType = 'code'
+    // }
 
-    //// default values
-    //if (!options.params.responseType) {
-    //  options.params.responseType = 'code';
-    //}
-
-    //if (!options.params.scope) {
-    //  options.params.scope = 'openid profile';
-    //}
-
+    // if (!options.params.scope) {
+    //  options.params.scope = 'openid profile'
+    // }
 
     // initialize settings
-    this.provider = options.provider;
-    this.client   = options.client;
-    this.params   = options.params;
-    this.clients  = options.clients;
+    this.provider = options.provider
+    this.client = options.client
+    this.params = options.params
+    this.clients = options.clients
   },
-
 
   /**
    * URI Generator
@@ -161,28 +149,25 @@ module.exports = {
    */
 
   uri: function (options) {
-    var anvil    = this
-      , options  = options || {}
-      , provider = anvil.provider
-      , client   = anvil.client
-      , params   = anvil.params
-      , uri      = anvil.provider.uri + '/'
-                 + (options.endpoint || 'authorize') + '?'
-                 ;
+    var anvil = this
+    options = options || {}
+    var client = anvil.client
+    params = anvil.params
+    var uri = anvil.provider.uri + '/' +
+      (options.endpoint || 'authorize') + '?'
 
     var params = {
       response_type: options.responseType || params.responseType || 'code',
-      redirect_uri:  options.redirectUri  || params.redirectUri,
-      client_id:     options.clientId     || client.id,
-      scope:         options.scope        || params.scope || 'openid profile'
-    };
+      redirect_uri: options.redirectUri || params.redirectUri,
+      client_id: options.clientId || client.id,
+      scope: options.scope || params.scope || 'openid profile'
+    }
 
     // optionally add state onto params
     // and any other options like prompt/display/etc
 
-    return uri + qs.stringify(params);
+    return uri + qs.stringify(params)
   },
-
 
   /**
    * Authorize
@@ -190,39 +175,36 @@ module.exports = {
    *
    *   app.get('/authorize', anvil.authorize({
    *     // options
-   *   }));
+   *   }))
    */
 
   authorize: function (options) {
-    var anvil   = this
-      , options = options || {}
-      ;
+    var anvil = this
+    options = options || {}
 
     return function (req, res, next) {
       res.redirect(anvil.uri({
-        endpoint:     options.endpoint || 'authorize',
+        endpoint: options.endpoint || 'authorize',
         responseType: options.responseType,
-        redirectUri:  options.redirectUri,
-        clientId:     options.clientId,
-        scope:        options.scope
-      }));
-    };
+        redirectUri: options.redirectUri,
+        clientId: options.clientId,
+        scope: options.scope
+      }))
+    }
   },
-
 
   /**
    * Signin
    * - redirect directly to signin endpoint
    *
-   *   app.get('/signin', anvil.signin());
+   *   app.get('/signin', anvil.signin())
    */
 
   signin: function (options) {
-    options = options || {};
-    options.endpoint = 'signin';
-    return this.authorize(options);
+    options = options || {}
+    options.endpoint = 'signin'
+    return this.authorize(options)
   },
-
 
   /**
    * Signup
@@ -230,27 +212,25 @@ module.exports = {
    */
 
   signup: function (options) {
-    options = options || {};
-    options.endpoint = 'signup';
-    return this.authorize(options);
+    options = options || {}
+    options.endpoint = 'signup'
+    return this.authorize(options)
   },
-
 
   /**
    * Connect a Third Party Account
    *
    *    app.get('/signin/:provider', anvil.connect({
    *      provider: req.params.provider
-   *    }));
+   *    }))
    */
 
   connect: function (options) {
-    options = options || {};
-    options.provider = options.provider;
-    options.endpoint = 'connect/' + options.provider;
-    return this.authorize(options);
+    options = options || {}
+    options.provider = options.provider
+    options.endpoint = 'connect/' + options.provider
+    return this.authorize(options)
   },
-
 
   /**
    * Callback Handler
@@ -272,32 +252,31 @@ module.exports = {
    *      //    authorization.identity.exp
    *      //    authorization.identity.iat
    *
-   *    });
+   *    })
    *
    * Can this be used inside a Passport Strategy?
    */
 
   callback: function (uri, callback) {
-    var anvil        = this
-      , provider     = anvil.provider
-      , client       = anvil.client
-      , params       = anvil.params
-      , authResponse = URL.parse(uri, true).query
-      , credentials  = new Buffer(client.id + ':'
-                     + client.secret).toString('base64')
-                     ;
+    var anvil = this
+    var provider = anvil.provider
+    var client = anvil.client
+    var params = anvil.params
+    var authResponse = URL.parse(uri, true).query
+    var credentials = new Buffer(client.id + ':' +
+      client.secret).toString('base64')
 
     // handle error response from authorization server
     if (authResponse.error) {
-      return callback(new CallbackError(authResponse));
+      return callback(new CallbackError(authResponse))
     }
 
     // token request parameters
     var tokenRequest = qs.stringify({
-      grant_type:   'authorization_code',
-      redirect_uri:  params.redirectUri,
-      code:          authResponse.code
-    });
+      grant_type: 'authorization_code',
+      redirect_uri: params.redirectUri,
+      code: authResponse.code
+    })
 
     // exchange authorization code for tokens
     request
@@ -305,15 +284,12 @@ module.exports = {
       .set('Authorization', 'Basic ' + credentials)
       .send(tokenRequest)
       .end(function (err, tokenResponse) {
-
         // Forbidden client or invalid request error
-        if (tokenResponse.error) {
+        if (err || tokenResponse.error) {
           return callback(new CallbackError(tokenResponse.body))
-        }
 
         // Successful token response
-        else {
-
+        } else {
           async.parallel({
             id_claims: function (done) {
               IDToken.verify(tokenResponse.body.id_token, {
@@ -321,34 +297,32 @@ module.exports = {
                 aud: client.id,
                 key: provider.key
               }, function (err, token) {
-                if (err) { return done(err); }
-                done(null, token.payload);
-              });
+                if (err) { return done(err) }
+                done(null, token.payload)
+              })
             },
 
             access_claims: function (done) {
               AccessToken.verify(tokenResponse.body.access_token, {
-                client:   client,
-                key:      provider.key,
-                issuer:   provider.uri
+                client: client,
+                key: provider.key,
+                issuer: provider.uri
               }, function (err, claims) {
-                if (err) { return done(err); }
-                done(null, claims);
-              });
+                if (err) { return done(err) }
+                done(null, claims)
+              })
             }
           }, function (err, result) {
-            if (err) { return callback(err); }
+            if (err) { return callback(err) }
 
-            tokenResponse.body.id_claims = result.id_claims;
-            tokenResponse.body.access_claims = result.access_claims;
+            tokenResponse.body.id_claims = result.id_claims
+            tokenResponse.body.access_claims = result.access_claims
 
-
-            callback(null, tokenResponse.body);
-          });
+            callback(null, tokenResponse.body)
+          })
         }
-      });
+      })
   },
-
 
   /**
    * UserInfo
@@ -379,29 +353,26 @@ module.exports = {
    *      //    info.address
    *      //    info.updated_at
    *
-   *    });
+   *    })
    */
 
   userInfo: function (accessToken, callback) {
-    var anvil    = this
-      , provider = anvil.provider
-      ;
+    var anvil = this
 
     request
       .get(anvil.provider.uri + '/userinfo')
       .set('Authorization', 'Bearer ' + accessToken)
-      .set('Accept',        'application/json')
+      .set('Accept', 'application/json')
       .end(function (err, response) {
         // error response from authorization server
-        if (response.error) {
-          return callback(new UnauthorizedError(response.body));
+        if (err || response.error) {
+          return callback(new UnauthorizedError(response.body))
         }
 
         // success
-        callback(null, response.body);
-      });
+        callback(null, response.body)
+      })
   },
-
 
   /**
    * Verify credentials at API endpoints
@@ -411,11 +382,11 @@ module.exports = {
    *
    * Use as route specific middleware:
    *
-   *    var authorize = anvil.verify({ scope: 'research' });
+   *    var authorize = anvil.verify({ scope: 'research' })
    *
    *    server.post('/protected', authorize, function (req, res, next) {
    *      // handle the request
-   *    });
+   *    })
    *
    * Or protect the entire server:
    *
@@ -425,57 +396,54 @@ module.exports = {
    *        'uuid1',
    *        'uuid2'
    *      ]
-   *    }));
+   *    }))
    *
    */
 
   verify: function (options) {
-    var anvil     = this
-      , provider  = anvil.provider
-      , client    = anvil.client
-      , options   = options || {}
-      , clients   = options.clients || anvil.clients
-      , scope     = options.scope
-      , key       = provider.key
-      ;
+    var anvil = this
+    var provider = anvil.provider
+    var client = anvil.client
+    options = options || {}
+    var clients = options.clients || anvil.clients
+    var scope = options.scope
 
     return function (req, res, next) {
-      var accessToken;
+      var accessToken
 
       // Check for an access token in the Authorization header
       if (req.headers && req.headers.authorization) {
-        var components    = req.headers.authorization.split(' ')
-          , scheme        = components[0]
-          , credentials = components[1]
-          ;
+        var components = req.headers.authorization.split(' ')
+        var scheme = components[0]
+        var credentials = components[1]
 
         if (components.length !== 2) {
           return next(new UnauthorizedError({
-            error:              'invalid_request',
-            error_description:  'Invalid authorization header',
-            statusCode:          400
-          }));
+            error: 'invalid_request',
+            error_description: 'Invalid authorization header',
+            statusCode: 400
+          }))
         }
 
         if (scheme !== 'Bearer') {
           return next(new UnauthorizedError({
-            error:              'invalid_request',
-            error_description:  'Invalid authorization scheme',
-            statusCode:          400
-          }));
+            error: 'invalid_request',
+            error_description: 'Invalid authorization scheme',
+            statusCode: 400
+          }))
         }
 
-        accessToken = credentials;
+        accessToken = credentials
       }
 
       // Check for an access token in the request URI
       if (req.query && req.query.access_token) {
         if (accessToken) {
           return next(new UnauthorizedError({
-            error:              'invalid_request',
-            error_description:  'Multiple authentication methods',
-            statusCode:          400
-          }));
+            error: 'invalid_request',
+            error_description: 'Multiple authentication methods',
+            statusCode: 400
+          }))
         }
 
         accessToken = req.query.access_token
@@ -485,19 +453,19 @@ module.exports = {
       if (req.body && req.body.access_token) {
         if (accessToken) {
           return next(new UnauthorizedError({
-            error:              'invalid_request',
-            error_description:  'Multiple authentication methods',
-            statusCode:          400
-          }));
+            error: 'invalid_request',
+            error_description: 'Multiple authentication methods',
+            statusCode: 400
+          }))
         }
 
-        if (req.headers
-         && req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
+        if (req.headers &&
+          req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
           return next(new UnauthorizedError({
-            error:              'invalid_request',
-            error_description:  'Invalid content-type',
-            statusCode:          400
-          }));
+            error: 'invalid_request',
+            error_description: 'Invalid content-type',
+            statusCode: 400
+          }))
         }
 
         accessToken = req.body.access_token
@@ -506,46 +474,41 @@ module.exports = {
       // Missing access token
       if (!accessToken) {
         return next(new UnauthorizedError({
-          realm:              'user',
-          error:              'invalid_request',
-          error_description:  'An access token is required',
-          statusCode:          400
-        }));
-      }
+          realm: 'user',
+          error: 'invalid_request',
+          error_description: 'An access token is required',
+          statusCode: 400
+        }))
 
       // Access token found
-      else {
+      } else {
         AccessToken.verify(accessToken, {
-
           // Token validation parameters
-          //jwt:      client.token,
-          client:   client,
-          key:      provider.key,
-          issuer:   provider.uri,
-          clients:  clients,
-          scope:    scope
+          // jwt:      client.token,
+          client: client,
+          key: provider.key,
+          issuer: provider.uri,
+          clients: clients,
+          scope: scope
 
         }, function (err, token) {
-
           // Validation error
           if (err) {
-            return next(err);
+            return next(err)
           }
 
           // Make the token metadata available downstream
-          req.token = token;
-          next();
+          req.token = token
+          next()
 
-        });
+        })
       }
     }
   },
 
+  IDToken: IDToken,
+  AccessToken: AccessToken,
+  CallbackError: CallbackError,
+  UnauthorizedError: UnauthorizedError
 
-  IDToken:            IDToken,
-  AccessToken:        AccessToken,
-  CallbackError:      CallbackError,
-  UnauthorizedError:  UnauthorizedError
-
-};
-
+}
