@@ -16,7 +16,7 @@
   ],
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register -R spec --watch"
+    "test": "standard && mocha --compilers coffee:coffee-script/register -R spec --watch"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
     "coffee-script": "^1.7.1",
     "nock": "^2.6.0",
     "sinon": "^1.15.4",
-    "sinon-chai": "^2.8.0"
+    "sinon-chai": "^2.8.0",
+    "standard": "^5.1.0"
   }
 }
