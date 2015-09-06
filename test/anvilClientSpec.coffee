@@ -18,7 +18,7 @@ chai.should()
 
 
 
-AnvilConnect = require path.join(cwd, 'promises')
+AnvilConnect = require path.join(cwd, 'index')
 
 
 
