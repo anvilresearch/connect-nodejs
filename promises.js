@@ -34,14 +34,6 @@ function AnvilConnect (options) {
 }
 
 /**
- * Initializer
- */
-
-function initializer (options) {
-  return new AnvilConnect(options)
-}
-
-/**
  * Configure
  *
  * Requests OIDC configuration from the AnvilConnect instance's provider.
@@ -209,54 +201,6 @@ function authorizationParams (options) {
 AnvilConnect.prototype.authorizationParams = authorizationParams
 
 /**
- * Login
- */
-
-function login (email, password) {
-  var self = this
-
-  // construct the endpoint
-  // this one isn't included in openid-configuration
-  var uri = this.issuer + '/signin'
-
-  // authorization parameters
-  var params = this.authorizationParams({
-    provider: 'password',
-    email: email,
-    password: password
-  })
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      form: params,
-      headers: { 'referer': uri }
-    })
-    // this is so ugly, but redirects get treated as errors by HTTP clients.
-    // So we need to handle the expected result using `catch`. Ugh.
-    .catch(function (err) {
-      if (err.statusCode === 302) {
-        var u = url.parse(err.response.headers.location)
-        var code = qs.parse(u.query).code
-
-        self.token({ code: code })
-        .then(function (data) {
-          resolve(data)
-        })
-        .catch(function (err) {
-          reject(err)
-        })
-      } else {
-        reject(err)
-      }
-    })
-  })
-}
-
-AnvilConnect.prototype.login = login
-
-/**
  * Token
  */
 
@@ -355,4 +299,4 @@ AnvilConnect.prototype.userInfo = userInfo
  * Exports
  */
 
-module.exports = initializer
+module.exports = AnvilConnect
