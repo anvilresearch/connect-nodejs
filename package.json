@@ -44,12 +44,14 @@
     "jwa": "^1.0.1",
     "lodash": "^3.10.0",
     "qs": "^3.1.0",
+    "request-promise": "^0.4.3",
     "superagent": "^1.2.0"
   },
   "devDependencies": {
     "chai": "^3.0.0",
     "coffee-script": "^1.7.1",
     "nock": "^2.6.0",
+    "pem-jwk": "^1.5.1",
     "sinon": "^1.15.4",
     "sinon-chai": "^2.8.0",
     "standard": "^5.1.0"

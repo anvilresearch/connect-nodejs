@@ -2,513 +2,348 @@
  * Module dependencies
  */
 
-var URL = require('url')
 var qs = require('qs')
+var url = require('url')
 var async = require('async')
-var request = require('superagent')
-var CallbackError = require('./errors/CallbackError')
+var request = require('request-promise')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
 
 /**
- * Anvil Connect Client
+ * Constructor
  */
 
-module.exports = {
-  /**
-   * Anvil Connect Provider Settings
-   */
-
-  provider: {
-    // uri
-    // key
-  },
-
-  /**
-   * Registered Client Settings
-   */
-
-  client: {
-    // id
-    // secret
-  },
-
-  /**
-   * Default Authorization Request Params
-   */
-
-  params: {
-    // responseType
-    // redirectUri
-    // scope
-  },
-
-  /**
-   * Client whitelist
-   *
-   * If this is undefined, all clients are authorized.
-   */
-
-  clients: undefined,
-
-  /**
-   * Client Configuration Setter
-   */
-
-  configure: function (options) {
-    // validate configuration
-    if (!options) {
-      throw new Error('A valid configuration is required.')
-    }
-
-    if (!options.provider) {
-      throw new Error('A valid provider configuration is required')
-    }
-
-    if (!options.provider.uri) {
-      throw new Error('Provider uri is required')
-    }
-
-    if (!options.provider.key) {
-      request
-        .get(options.provider.uri + '/jwks')
-        .end(function (err, response) {
-          if (err) {
-            throw new Error(
-              "Can't find the signing key. Check your provider uri configuration."
-            )
-          }
-
-          var jwks
-          if (Array.isArray(response.body)) {
-            jwks = response.body
-          } else if (response.body && response.body.keys) {
-            jwks = response.body.keys
-          }
-
-          if (!jwks) {
-            throw new Error(
-              "Can't parse JWK endpoint response."
-            )
-          }
-
-          jwks.forEach(function (jwk) {
-            if (jwk && jwk.use === 'sig') {
-              options.provider.key = jwk
-            }
-          })
-        })
-    }
-
-    if (!options.client) {
-      throw new Error('A valid client configuration is required')
-    }
-
-    if (!options.client.id) {
-      throw new Error('Client ID is required')
-    }
-
-    // if (!options.client.token) {
-    //  throw new Error('Client token is required')
-    // }
-
-    // if (!options.params) {
-    //  throw new Error('Valid authorization params configuration is required')
-    // }
-
-    // if (!options.params.redirectUri) {
-    //  throw new Error('Redirect URI is required')
-    // }
-
-    // // default values
-    // if (!options.params.responseType) {
-    //  options.params.responseType = 'code'
-    // }
-
-    // if (!options.params.scope) {
-    //  options.params.scope = 'openid profile'
-    // }
-
-    // initialize settings
-    this.provider = options.provider
-    this.client = options.client
-    this.params = options.params
-    this.clients = options.clients
-  },
-
-  /**
-   * URI Generator
-   *
-   * Example:
-   *
-   *    var uri = anvil.uri({
-   *      endpoint: 'signin',
-   *      // override defaults here
-   *    })
-   */
-
-  uri: function (options) {
-    var anvil = this
-    options = options || {}
-    var client = anvil.client
-    params = anvil.params
-    var uri = anvil.provider.uri + '/' +
-      (options.endpoint || 'authorize') + '?'
-
-    var params = {
-      response_type: options.responseType || params.responseType || 'code',
-      redirect_uri: options.redirectUri || params.redirectUri,
-      client_id: options.clientId || client.id,
-      scope: options.scope || params.scope || 'openid profile'
-    }
-
-    // optionally add state onto params
-    // and any other options like prompt/display/etc
-
-    return uri + qs.stringify(params)
-  },
-
-  /**
-   * Authorize
-   * - redirect to the authorize endpoint
-   *
-   *   app.get('/authorize', anvil.authorize({
-   *     // options
-   *   }))
-   */
-
-  authorize: function (options) {
-    var anvil = this
-    options = options || {}
-
-    return function (req, res, next) {
-      res.redirect(anvil.uri({
-        endpoint: options.endpoint || 'authorize',
-        responseType: options.responseType,
-        redirectUri: options.redirectUri,
-        clientId: options.clientId,
-        scope: options.scope
-      }))
-    }
-  },
-
-  /**
-   * Signin
-   * - redirect directly to signin endpoint
-   *
-   *   app.get('/signin', anvil.signin())
-   */
-
-  signin: function (options) {
-    options = options || {}
-    options.endpoint = 'signin'
-    return this.authorize(options)
-  },
-
-  /**
-   * Signup
-   * - redirect directly to signup endpoint
-   */
-
-  signup: function (options) {
-    options = options || {}
-    options.endpoint = 'signup'
-    return this.authorize(options)
-  },
-
-  /**
-   * Connect a Third Party Account
-   *
-   *    app.get('/signin/:provider', anvil.connect({
-   *      provider: req.params.provider
-   *    }))
-   */
-
-  connect: function (options) {
-    options = options || {}
-    options.provider = options.provider
-    options.endpoint = 'connect/' + options.provider
-    return this.authorize(options)
-  },
-
-  /**
-   * Callback Handler
-   *
-   *    anvil.callback(req.url, function (err, authorization) {
-   *
-   *      // `authorization.tokens` contains the auth server's token endpoint response
-   *      //
-   *      //    authorization.tokens.access_token
-   *      //    authorization.tokens.refresh_token
-   *      //    authorization.tokens.expires_in
-   *      //    authorization.tokens.id_token
-   *
-   *      // `authorization.identity` contains the decoded and verified claims of the id_token
-   *      //
-   *      //    authorization.identity.iss
-   *      //    authorization.identity.sub
-   *      //    authorization.identity.aud
-   *      //    authorization.identity.exp
-   *      //    authorization.identity.iat
-   *
-   *    })
-   *
-   * Can this be used inside a Passport Strategy?
-   */
-
-  callback: function (uri, callback) {
-    var anvil = this
-    var provider = anvil.provider
-    var client = anvil.client
-    var params = anvil.params
-    var authResponse = URL.parse(uri, true).query
-    var credentials = new Buffer(client.id + ':' +
-      client.secret).toString('base64')
-
-    // handle error response from authorization server
-    if (authResponse.error) {
-      return callback(new CallbackError(authResponse))
-    }
-
-    // token request parameters
-    var tokenRequest = qs.stringify({
-      grant_type: 'authorization_code',
-      redirect_uri: params.redirectUri,
-      code: authResponse.code
-    })
-
-    // exchange authorization code for tokens
-    request
-      .post(provider.uri + '/token')
-      .set('Authorization', 'Basic ' + credentials)
-      .send(tokenRequest)
-      .end(function (err, tokenResponse) {
-        // Forbidden client or invalid request error
-        if (err || tokenResponse.error) {
-          return callback(new CallbackError(tokenResponse.body))
-
-        // Successful token response
-        } else {
-          async.parallel({
-            id_claims: function (done) {
-              IDToken.verify(tokenResponse.body.id_token, {
-                iss: provider.uri,
-                aud: client.id,
-                key: provider.key
-              }, function (err, token) {
-                if (err) { return done(err) }
-                done(null, token.payload)
-              })
-            },
-
-            access_claims: function (done) {
-              AccessToken.verify(tokenResponse.body.access_token, {
-                client: client,
-                key: provider.key,
-                issuer: provider.uri
-              }, function (err, claims) {
-                if (err) { return done(err) }
-                done(null, claims)
-              })
-            }
-          }, function (err, result) {
-            if (err) { return callback(err) }
-
-            tokenResponse.body.id_claims = result.id_claims
-            tokenResponse.body.access_claims = result.access_claims
-
-            callback(null, tokenResponse.body)
-          })
-        }
-      })
-  },
-
-  /**
-   * UserInfo
-   *
-   *    anvil.userInfo(accessToken, function (err, info) {
-   *
-   *      // `info` contains basic account information for the user
-   *      // represented by the accessToken argument.
-   *      //
-   *      //    info.sub
-   *      //    info.name
-   *      //    info.given_name
-   *      //    info.family_name
-   *      //    info.middle_name
-   *      //    info.nickname
-   *      //    info.perferred_username
-   *      //    info.profile
-   *      //    info.picture
-   *      //    info.website
-   *      //    info.email
-   *      //    info.email_verified
-   *      //    info.gender
-   *      //    info.birthdate
-   *      //    info.zoneinfo
-   *      //    info.locale
-   *      //    info.phone_number
-   *      //    info.phone_number_verified
-   *      //    info.address
-   *      //    info.updated_at
-   *
-   *    })
-   */
-
-  userInfo: function (accessToken, callback) {
-    var anvil = this
-
-    request
-      .get(anvil.provider.uri + '/userinfo')
-      .set('Authorization', 'Bearer ' + accessToken)
-      .set('Accept', 'application/json')
-      .end(function (err, response) {
-        // error response from authorization server
-        if (err || response.error) {
-          return callback(new UnauthorizedError(response.body))
-        }
-
-        // success
-        callback(null, response.body)
-      })
-  },
-
-  /**
-   * Verify credentials at API endpoints
-   *
-   * This should comply with RFC6750:
-   * http://tools.ietf.org/html/rfc6750
-   *
-   * Use as route specific middleware:
-   *
-   *    var authorize = anvil.verify({ scope: 'research' })
-   *
-   *    server.post('/protected', authorize, function (req, res, next) {
-   *      // handle the request
-   *    })
-   *
-   * Or protect the entire server:
-   *
-   *    server.use(anvil.verify({
-   *      scope: 'research',
-   *      clients: [
-   *        'uuid1',
-   *        'uuid2'
-   *      ]
-   *    }))
-   *
-   */
-
-  verify: function (options) {
-    var anvil = this
-    var provider = anvil.provider
-    var client = anvil.client
-    options = options || {}
-    var clients = options.clients || anvil.clients
-    var scope = options.scope
-
-    return function (req, res, next) {
-      var accessToken
-
-      // Check for an access token in the Authorization header
-      if (req.headers && req.headers.authorization) {
-        var components = req.headers.authorization.split(' ')
-        var scheme = components[0]
-        var credentials = components[1]
-
-        if (components.length !== 2) {
-          return next(new UnauthorizedError({
-            error: 'invalid_request',
-            error_description: 'Invalid authorization header',
-            statusCode: 400
-          }))
-        }
-
-        if (scheme !== 'Bearer') {
-          return next(new UnauthorizedError({
-            error: 'invalid_request',
-            error_description: 'Invalid authorization scheme',
-            statusCode: 400
-          }))
-        }
-
-        accessToken = credentials
-      }
-
-      // Check for an access token in the request URI
-      if (req.query && req.query.access_token) {
-        if (accessToken) {
-          return next(new UnauthorizedError({
-            error: 'invalid_request',
-            error_description: 'Multiple authentication methods',
-            statusCode: 400
-          }))
-        }
-
-        accessToken = req.query.access_token
-      }
-
-      // Check for an access token in the request body
-      if (req.body && req.body.access_token) {
-        if (accessToken) {
-          return next(new UnauthorizedError({
-            error: 'invalid_request',
-            error_description: 'Multiple authentication methods',
-            statusCode: 400
-          }))
-        }
-
-        if (req.headers &&
-          req.headers['content-type'] !== 'application/x-www-form-urlencoded') {
-          return next(new UnauthorizedError({
-            error: 'invalid_request',
-            error_description: 'Invalid content-type',
-            statusCode: 400
-          }))
-        }
-
-        accessToken = req.body.access_token
-      }
-
-      // Missing access token
-      if (!accessToken) {
-        return next(new UnauthorizedError({
-          realm: 'user',
-          error: 'invalid_request',
-          error_description: 'An access token is required',
-          statusCode: 400
-        }))
-
-      // Access token found
-      } else {
-        AccessToken.verify(accessToken, {
-          // Token validation parameters
-          // jwt:      client.token,
-          client: client,
-          key: provider.key,
-          issuer: provider.uri,
-          clients: clients,
-          scope: scope
-
-        }, function (err, token) {
-          // Validation error
-          if (err) {
-            return next(err)
-          }
-
-          // Make the token metadata available downstream
-          req.token = token
-          next()
-
-        })
-      }
-    }
-  },
-
-  IDToken: IDToken,
-  AccessToken: AccessToken,
-  CallbackError: CallbackError,
-  UnauthorizedError: UnauthorizedError
-
+function AnvilConnect (options) {
+  options = options || {}
+
+  // assign required options
+  this.issuer = options.issuer
+  this.client_id = options.client_id
+  this.client_secret = options.client_secret
+  this.redirect_uri = options.redirect_uri
+
+  // add scope to defaults
+  var defaultScope = ['openid', 'profile']
+  if (typeof options.scope === 'string') {
+    this.scope = defaultScope.concat(options.scope.split(' ')).join(' ')
+  } else if (Array.isArray(options.scope)) {
+    this.scope = defaultScope.concat(options.scope).join(' ')
+  } else {
+    this.scope = defaultScope.join(' ')
+  }
 }
+
+/**
+ * Errors
+ */
+
+AnvilConnect.UnauthorizedError = UnauthorizedError
+
+/**
+ * Configure
+ *
+ * Requests OIDC configuration from the AnvilConnect instance's provider.
+ */
+
+function discover () {
+  var self = this
+
+  // construct the uri
+  var uri = url.parse(this.issuer)
+  uri.pathname = '.well-known/openid-configuration'
+  uri = url.format(uri)
+
+  // return a promise
+  return new Promise(function (resolve, reject) {
+    request({
+      url: uri,
+      method: 'GET',
+      json: true
+    })
+    .then(function (data) {
+      self.configuration = data
+      resolve(data)
+    })
+    .catch(function (err) {
+      reject(err)
+    })
+  })
+}
+
+AnvilConnect.prototype.discover = discover
+
+/**
+ * JWK set
+ *
+ * Requests JSON Web Key set from configured provider
+ */
+
+function getJWKs () {
+  var self = this
+  var uri = this.configuration.jwks_uri
+
+  return new Promise(function (resolve, reject) {
+    request({
+      url: uri,
+      method: 'GET',
+      json: true
+    })
+    .then(function (data) {
+      // make it easier to reference the JWK by use
+      data.keys.forEach(function (jwk) {
+        data[jwk.use] = jwk
+      })
+
+      // make the JWK set available on the client
+      self.jwks = data
+      resolve(data)
+    })
+    .catch(function (err) {
+      reject(err)
+    })
+  })
+}
+
+AnvilConnect.prototype.getJWKs = getJWKs
+
+/**
+ * Register client
+ *
+ * Right now this only works with dynamic registration. Anvil Connect server instances
+ * that are configured with `token` or `scoped` for `client_registration` don't yet
+ * work.
+ */
+
+function register (registration) {
+  var self = this
+  var uri = this.configuration.registration_endpoint
+
+  return new Promise(function (resolve, reject) {
+    request({
+      url: uri,
+      method: 'POST',
+      json: registration
+    })
+    .then(function (data) {
+      self.client_id = data.client_id
+      self.client_secret = data.client_secret
+      self.registration = data
+      resolve(data)
+    })
+    .catch(function (err) {
+      reject(err)
+    })
+  })
+}
+
+AnvilConnect.prototype.register = register
+
+/**
+ * Authorization URI
+ */
+
+function authorizationUri (options) {
+  var u = url.parse(this.configuration.authorization_endpoint)
+
+  // assign endpoint and ensure options
+  var endpoint = 'authorize'
+  if (typeof options === 'string') {
+    endpoint = options
+    options = {}
+  } else if (typeof options === 'object') {
+    endpoint = options.endpoint
+  } else {
+    options = {}
+  }
+
+  // pathname
+  u.pathname = endpoint
+
+  // request params
+  u.query = this.authorizationParams(options)
+
+  return url.format(u)
+}
+
+AnvilConnect.prototype.authorizationUri = authorizationUri
+
+/**
+ * Authorization Params
+ */
+
+function authorizationParams (options) {
+  // ensure options is defined
+  options = options || {}
+
+  // essential request params
+  var params = {
+    response_type: options.response_type || 'code',
+    client_id: this.client_id,
+    redirect_uri: options.redirect_uri || this.redirect_uri,
+    scope: options.scope || this.scope
+  }
+
+  // optional request params
+  var optionalParameters = [
+    'email',
+    'password',
+    'provider',
+    'state',
+    'response_mode',
+    'nonce',
+    'display',
+    'prompt',
+    'max_age',
+    'ui_locales',
+    'id_token_hint',
+    'login_hint',
+    'acr_values'
+  ]
+
+  // assign optional request params
+  optionalParameters.forEach(function (param) {
+    if (options[param]) {
+      params[param] = options[param]
+    }
+  })
+
+  return params
+}
+
+AnvilConnect.prototype.authorizationParams = authorizationParams
+
+/**
+ * Token
+ */
+
+function token (options) {
+  options = options || {}
+
+  var self = this
+  var uri = this.configuration.token_endpoint
+  var code = options.code
+
+  // get the authorization code
+  if (!code && options.responseUri) {
+    var u = url.parse(options.responseUri)
+    code = qs.parse(u.query).code
+  }
+
+  return new Promise(function (resolve, reject) {
+    if (!code) {
+      return reject(new Error('Missing authorization code'))
+    }
+
+    request({
+      url: uri,
+      method: 'POST',
+      form: {
+        grant_type: options.grant_type || 'authorization_code',
+        code: code,
+        redirect_uri: options.redirect_uri || self.redirect_uri
+      },
+      json: true,
+      auth: {
+        user: self.client_id,
+        pass: self.client_secret
+      }
+    })
+    .then(function (data) {
+
+      // verify tokens
+      async.parallel({
+        id_claims: function (done) {
+          IDToken.verify(data.id_token, {
+            iss: self.issuer,
+            aud: self.client_id,
+            key: self.jwks.keys[0]
+          }, function (err, token) {
+            if (err) { return done(err) }
+            done(null, token.payload)
+          })
+        },
+
+        access_claims: function (done) {
+          AccessToken.verify(data.access_token, {
+            key: self.jwks.keys[0],
+            issuer: self.issuer
+          }, function (err, claims) {
+            if (err) { return done(err) }
+            done(null, claims)
+          })
+        }
+      }, function (err, result) {
+        if (err) {
+          return reject(err)
+        }
+
+        data.id_claims = result.id_claims
+        data.access_claims = result.access_claims
+
+        resolve(data)
+      })
+    })
+    .catch(function (err) {
+      reject(err)
+    })
+  })
+}
+
+AnvilConnect.prototype.token = token
+
+/**
+ * User Info
+ */
+
+function userInfo () {
+  var uri = this.configuration.userinfo_endpoint
+  var token = this.tokens.access_token
+
+  return new Promise(function (resolve, reject) {
+    request({
+      url: uri,
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + token
+      },
+      json: true
+    })
+    .then(function (data) {
+      resolve(data)
+    })
+    .catch(function (err) {
+      reject(err)
+    })
+  })
+}
+
+AnvilConnect.prototype.userInfo = userInfo
+
+/**
+ * Verify Access Token
+ */
+
+function verify (token, options) {
+  options = options || {}
+  options.issuer = options.issuer || this.issuer
+  options.client_id = options.client_id || this.client_id
+  options.client_secret = options.client_secret || this.client_secret
+  options.scope = options.scope || this.scope
+  options.key = options.key || this.jwks.sig
+
+  return new Promise(function (resolve, reject) {
+    AccessToken.verify(token, options, function (err, claims) {
+      if (err) { return reject(err) }
+      resolve(claims)
+    })
+  })
+}
+
+AnvilConnect.prototype.verify = verify
+
+/**
+ * Exports
+ */
+
+module.exports = AnvilConnect
