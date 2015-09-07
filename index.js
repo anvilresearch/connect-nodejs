@@ -83,6 +83,12 @@ function getJWKs () {
       json: true
     })
     .then(function (data) {
+      // make it easier to reference the JWK by use
+      data.keys.forEach(function (jwk) {
+        data[jwk.use] = jwk
+      })
+
+      // make the JWK set available on the client
       self.jwks = data
       resolve(data)
     })
@@ -300,6 +306,29 @@ function userInfo () {
 }
 
 AnvilConnect.prototype.userInfo = userInfo
+
+/**
+ * Verify Access Token
+ */
+
+function verify (token, options) {
+  options = options || {}
+  options.issuer = options.issuer || this.issuer
+  options.client_id = options.client_id || this.client_id
+  options.client_secret = options.client_secret || this.client_secret
+  options.scope = options.scope || this.scope
+  options.key = options.key || this.jwks.sig
+
+  return new Promise(function (resolve, reject) {
+    AccessToken.verify(token, options, function (err, claims) {
+      console.log('anvil.verify', err, claims)
+      if (err) { return reject(err) }
+      resolve(claims)
+    })
+  })
+}
+
+AnvilConnect.prototype.verify = verify
 
 /**
  * Exports

@@ -19,6 +19,7 @@ chai.should()
 
 
 AnvilConnect = require path.join(cwd, 'index')
+AccessToken = require path.join(cwd, 'lib', 'AccessToken')
 
 
 
@@ -273,7 +274,10 @@ describe 'Anvil Connect Client', ->
         success.should.have.been.calledWith sinon.match jwks
 
       it 'should set jwks', ->
-        anvil.jwks.should.eql jwks
+        anvil.jwks.keys.should.eql jwks.keys
+
+      it 'should set signature jwk', ->
+        anvil.jwks.sig.should.eql jwks.keys[0]
 
       it 'should not catch an error', ->
         failure.should.not.have.been.called
@@ -566,3 +570,148 @@ describe 'Anvil Connect Client', ->
 
 
   describe 'verify', ->
+
+    {claims,options} = {}
+
+    describe 'with defaults and invalid token', ->
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, new Error)
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.verify('invalid.access.token')
+          .then(success)
+          .catch(failure)
+
+      after ->
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the claims', ->
+        success.should.have.not.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.called
+
+
+    describe 'with defaults and valid token', ->
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        claims = sub: 'uuid'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, claims)
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.verify('valid.access.token')
+          .then(success)
+          .catch(failure)
+
+      after ->
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should provide the claims', ->
+        success.should.have.been.calledWith sinon.match claims
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
+
+
+    describe 'with options and invalid token', ->
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, new Error)
+
+        options =
+          scope: 'realm'
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.verify('invalid.access.token', options)
+          .then(success)
+          .catch(failure)
+
+      after ->
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should pass the options to verify', ->
+        AccessToken.verify.should.have.been.calledWith(
+          sinon.match.string, sinon.match(options)
+        )
+
+      it 'should not provide the claims', ->
+        success.should.have.not.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.called
+
+
+    describe 'with options and valid token', ->
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        claims = sub: 'uuid'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, claims)
+
+        options =
+          scope: 'realm'
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.verify('valid.access.token', options)
+          .then(success)
+          .catch(failure)
+
+      after ->
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should pass the options to verify', ->
+        AccessToken.verify.should.have.been.calledWith(
+          sinon.match.string, sinon.match(options)
+        )
+
+      it 'should provide the claims', ->
+        success.should.have.been.calledWith sinon.match claims
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
+
+
