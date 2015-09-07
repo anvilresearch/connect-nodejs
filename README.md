@@ -1,6 +1,20 @@
-# Node SDK for Anvil Connect
+# Anvil Connect client for Nodejs
 
-**[Anvil Connect](https://github.com/anvilresearch/connect)** aims to be a scalable, full-featured, ready-to-run [**OpenID Connect**](http://openid.net/connect/) + [**OAuth 2.0**](http://tools.ietf.org/html/rfc6749) **Provider**. This package is a Nodejs client.
+[Anvil Connect][connect] is a modern authorization server built to authenticate 
+your users and protect your APIs. It's based on [OAuth 2.0][oauth2] and 
+[OpenID Connect][oidc]. 
+
+[This library][connect-nodejs] is a low level OpenID Connect and Anvil Connect 
+API client. Previous versions included Express-specific functions and 
+middleware. These higher-level functions are being split out into a 
+[separate library][connect-express].
+
+[oauth2]: http://tools.ietf.org/html/rfc6749
+[oidc]: http://openid.net/connect/
+[connect]: https://github.com/anvilresearch/connect
+[connect-nodejs]: https://github.com/anvilresearch/connect-nodejs
+[connect-express]: https://github.com/anvilresearch/connect-express
+
 
 
 ### Install
@@ -9,46 +23,68 @@
 $ npm install anvil-connect-nodejs --save
 ```
 
+### Example
+
+```javascript
+var AnvilConnect = require('anvil-connect-nodejs');
+
+var anvil = new AnvilConnect({
+  issuer: 'https://connect.example.com',
+  client_id: 'CLIENT_ID',
+  client_secret: 'CLIENT_SECRET',
+  redirect_uri: 'REDIRECT_URI'
+}) 
+
+// get the discovery document for the OpenID Connect provider
+anvil.discover()
+  .then(function (configuration) {
+    // the call to discover() cached the configuration on the client instance
+    console.log(anvil.configuration)
+
+    // get the public keys for verifying tokens
+    return anvil.getJWKs()  
+  })
+  .then(function (jwks) {
+    // the call to getJwks() cached the JWK set on the client instance too
+    console.log(jwks)
+
+    // get an authorization uri
+    return anvil.authorizationUri()
+  })
+  .then(function (uri) {
+    console.log(uri)
+
+    // handle an authorization response
+    return anvil.token({ code: 'AUTHORIZATION_CODE' })
+  })
+  .then(function (tokens) {
+    // a successful call to tokens() gives us id_token, access_token, 
+    // refresh_token, expiration, and the decoded payloads of the JWTs
+    console.log(tokens)
+
+    // get userinfo
+    // this requires tokens to be set on the client instance
+    // i.e., anvil.tokens
+    return anvil.userInfo()
+  })
+  .then(function (userInfo) {
+    console.log(userInfo)
+
+    // verify an access token
+    return anvil.verify(JWT, { scope: 'research' })
+  })
+```
+
 ### Usage
 
-Configuration example:
+#### new AnvilConnect(config)
+#### anvil.discover()
+#### anvil.getJWKs()
+#### anvil.register(registration)
+#### anvil.authorizationUri(options)
+#### anvil.authorizationParams(options)
+#### anvil.token(options)
+#### anvil.userInfo()
+#### anvil.verify(token, options)
 
-```javascript
-var anvil = require('anvil-connect-nodejs');
-
-anvil.configure({
-  provider: {
-    uri: 'https://your.authorization.server',
-    key: '/path/to/public.key.pem'
-  },
-  client: {
-    id: 'uuid',
-    token: 'client.jwt.access.token'
-  },
-  params: {
-    redirectUri: 'https://your.client.tld/callback'
-  }
-});
-```
-
-
-### Protecting Services
-
-This package includes Connect/Express/Restify compatible middleware for authenticating access tokens issued by Anvil Connect and enforcing authorization based on OAuth 2.0 scope.
-
-This middleware can be used as route specific middleware...
-
-```javascript
-var authorize = anvil.verify({ scope: 'research' });
-
-server.post('/protected', authorize, function (req, res, next) {
-  // handle the request
-});
-```
-
-...or to protect the entire server:
-
-```javascript
-server.use(anvil.verify({ scope: 'research' }));
-```
 
