@@ -5,6 +5,7 @@ path        = require 'path'
 chai        = require 'chai'
 sinon       = require 'sinon'
 sinonChai   = require 'sinon-chai'
+nock        = require 'nock'
 expect      = chai.expect
 
 
@@ -19,7 +20,6 @@ chai.should()
 
 # Code under test
 AccessToken = require path.join cwd, 'lib/AccessToken'
-#AccessTokenError = require path.join cwd, 'lib/AccessTokenError'
 JWT = require 'anvil-connect-jwt'
 base64url = require 'base64url'
 nowSeconds = require(path.join cwd, 'lib/time-utils').nowSeconds
@@ -254,7 +254,7 @@ describe 'Access Token', ->
 
     describe 'with verifiable JWT and valid payload', ->
 
-      {payload} = {}
+      {payload,claims,err} = {}
 
       before (done) ->
         payload =
@@ -292,11 +292,296 @@ describe 'Access Token', ->
 
 
     describe 'with unverifiable random token', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: issuer
+          sub: 'uuid'
+          exp: Date.now()
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(401, 'Unauthorized')
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after ->
+        nock.cleanAll()
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should provide an error description', ->
+        err.message.should.equal 'Unauthorized'
+
+      it 'should not provide a decoded token', ->
+        expect(token).to.not.be.ok
+
+
     describe 'with verifiable random token and mismatching issuer', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: 'https://WRONG.anvil.io'
+          sub: 'uuid'
+          exp: Date.now()
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(200, claims)
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after ->
+        nock.cleanAll()
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Mismatching issuer'
+
+      it 'should not provide a decoded token', ->
+        expect(token).to.not.be.ok
+
+
     describe 'with verifiable random token and mismatching audience', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: issuer
+          sub: 'uuid'
+          exp: Date.now()
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+          clients: 'https://not.client.app'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(200, claims)
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after ->
+        nock.cleanAll()
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Mismatching audience'
+
+      it 'should not provide a decoded token', ->
+        expect(token).to.not.be.ok
+
+
     describe 'with verifiable random token and expired token', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: issuer
+          sub: 'uuid'
+          exp: nowSeconds(-1000)
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(200, claims)
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after ->
+        nock.cleanAll()
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Expired access token'
+
+      it 'should not provide a decoded token', ->
+        expect(token).to.not.be.ok
+
+
     describe 'with verifiable random token and insufficient scope', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: issuer
+          sub: 'uuid'
+          exp: Date.now()
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+          scope: 'realm'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(200, claims)
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after ->
+        nock.cleanAll()
+
+      it 'should provide an error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should provide an error description', ->
+        err.error_description.should.equal 'Insufficient scope'
+
+      it 'should not provide a decoded token', ->
+        expect(token).to.not.be.ok
+
+
     describe 'with verifiable random token and valid payload', ->
+
+      {claims} = {}
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        claims =
+          jti: 'random'
+          iss: issuer
+          sub: 'uuid'
+          exp: Date.now()
+          iat: Date.now()
+          aud: 'https://your.client.app'
+          scope: 'openid profile'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+          .post('/token/verify', { access_token: claims.jti })
+          .basicAuth({
+            user: options.client_id
+            pass: options.client_secret
+          })
+          .reply(200, claims)
+
+        AccessToken.verify claims.jti, options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      it 'should not provide an error', ->
+        expect(err).to.not.be.ok
+
+      it 'should provide a decoded token', ->
+        token.should.eql claims
+
 
 
 
