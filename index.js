@@ -8,6 +8,7 @@ var async = require('async')
 var request = require('request-promise')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
+var UnauthorizedError = require('./errors/UnauthorizedError')
 
 /**
  * Constructor
@@ -32,6 +33,12 @@ function AnvilConnect (options) {
     this.scope = defaultScope.join(' ')
   }
 }
+
+/**
+ * Errors
+ */
+
+AnvilConnect.UnauthorizedError = UnauthorizedError
 
 /**
  * Configure
