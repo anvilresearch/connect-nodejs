@@ -409,17 +409,16 @@ describe 'Anvil Connect Client', ->
 
     describe 'with an options argument', ->
 
-      {uri} = {}
-
-      before ->
+      it 'should set the optional endpoint', ->
         uri = anvil.authorizationUri({
           endpoint: 'connect/google'
         })
-
-      it 'should set the optional endpoint', ->
         uri.should.contain '/connect/google?'
 
       it 'should set default authorization params', ->
+        uri = anvil.authorizationUri({
+          endpoint: 'connect/google'
+        })
         uri.should.contain 'response_type=code'
         uri.should.contain "client_id=#{config.client_id}"
         uri.should.contain "redirect_uri=#{encodeURIComponent(config.redirect_uri)}"
