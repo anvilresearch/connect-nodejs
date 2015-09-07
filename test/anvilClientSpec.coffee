@@ -20,6 +20,7 @@ chai.should()
 
 AnvilConnect = require path.join(cwd, 'index')
 AccessToken = require path.join(cwd, 'lib', 'AccessToken')
+IDToken = require path.join(cwd, 'lib', 'IDToken')
 
 
 
@@ -486,12 +487,375 @@ describe 'Anvil Connect Client', ->
 
   describe 'token', ->
 
+    describe 'with missing options argument', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token()
+          .then(success)
+          .catch(failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match({
+          message: 'Missing authorization code'
+        })
+
+
     describe 'with missing authorization code', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({})
+          .then(success)
+          .catch(failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match({
+          message: 'Missing authorization code'
+        })
+
+
     describe 'with error response', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.tokens =
+          access_token: 'jwt1'
+          id_token: 'jwt2'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            grant_type: 'authorization_code',
+            code: 'random',
+            redirect_uri: config.redirect_uri
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(400, {
+            error: 'invalid_request'
+          })
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({ code: 'random' })
+          .then(success)
+          .catch(failure)
+
+      after ->
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.called
+
+
     describe 'with unverifiable id token', ->
+
+      {tokens} = {}
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        tokens =
+          id_token: 'invalid.id.token'
+          access_token: 'valid.access.token'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            grant_type: 'authorization_code',
+            code: 'random',
+            redirect_uri: config.redirect_uri
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(200, tokens)
+
+        claims = sub: 'uuid'
+        sinon.stub(IDToken, 'verify').callsArgWith(2, new Error())
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, {})
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({ code: 'random' })
+          .then(success)
+          .catch(failure)
+
+      after ->
+        IDToken.verify.restore()
+        AccessToken.verify.restore()
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should verify the id token', ->
+        IDToken.verify.should.have.been.calledWith tokens.id_token
+
+      it 'should verify the access token', ->
+        AccessToken.verify.should.have.been.calledWith tokens.access_token
+
+      it 'should not provide the id claims', ->
+        success.should.not.have.been.called
+
+      it 'should not catch an error', ->
+        failure.should.have.been.called
+
+
     describe 'with unverifiable access token', ->
+
+      {tokens} = {}
+
+      before (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        tokens =
+          id_token: 'valid.id.token'
+          access_token: 'invalid.access.token'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            grant_type: 'authorization_code',
+            code: 'random',
+            redirect_uri: config.redirect_uri
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(200, tokens)
+
+        claims = sub: 'uuid'
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, new Error())
+        sinon.stub(IDToken, 'verify').callsArgWith(2, null, {})
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({ code: 'random' })
+          .then(success)
+          .catch(failure)
+
+      after ->
+        AccessToken.verify.restore()
+        IDToken.verify.restore()
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should verify the id token', ->
+        IDToken.verify.should.have.been.calledWith tokens.id_token
+
+      it 'should verify the access token', ->
+        AccessToken.verify.should.have.been.calledWith tokens.access_token
+
+      it 'should not provide the id claims', ->
+        success.should.not.have.been.called
+
+      it 'should not catch an error', ->
+        failure.should.have.been.called
+
+
     describe 'with valid token response', ->
+
+      {tokens} = {}
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        tokens =
+          id_token: 'valid.id.token'
+          access_token: 'valid.access.token'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            grant_type: 'authorization_code',
+            code: 'random',
+            redirect_uri: config.redirect_uri
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(200, tokens)
+
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, {
+          aud: config.client_id
+        })
+
+        sinon.stub(IDToken, 'verify').callsArgWith(2, null, {
+          payload: { iss: config.issuer }
+        })
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({ code: 'random' })
+          .then(success)
+          .catch(failure)
+
+      afterEach ->
+        AccessToken.verify.restore()
+        IDToken.verify.restore()
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should verify the id token', ->
+        IDToken.verify.should.have.been.calledWith tokens.id_token
+
+      it 'should verify the access token', ->
+        AccessToken.verify.should.have.been.calledWith tokens.access_token
+
+      it 'should provide the tokens', ->
+        success.should.have.been.calledWith sinon.match tokens
+
+      it 'should provide the id claims', ->
+        success.should.have.been.calledWith sinon.match({
+          id_claims: {
+            iss: config.issuer
+          }
+        })
+
+      it 'should provide the access claims', ->
+        success.should.have.been.calledWith sinon.match({
+          access_claims: {
+            aud: config.client_id
+          }
+        })
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
+
+
     describe 'with response uri', ->
+
+      {tokens} = {}
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        tokens =
+          id_token: 'valid.id.token'
+          access_token: 'valid.access.token'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            grant_type: 'authorization_code',
+            code: 'random',
+            redirect_uri: config.redirect_uri
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(200, tokens)
+
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, {
+          aud: config.client_id
+        })
+
+        sinon.stub(IDToken, 'verify').callsArgWith(2, null, {
+          payload: { iss: config.issuer }
+        })
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy (err) ->
+          console.log err
+          done()
+        promise = anvil.token({
+          responseUri: 'https://app.example.com/callback?code=random'
+        })
+          .then(success)
+          .catch(failure)
+
+      afterEach ->
+        AccessToken.verify.restore()
+        IDToken.verify.restore()
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should verify the id token', ->
+        IDToken.verify.should.have.been.calledWith tokens.id_token
+
+      it 'should verify the access token', ->
+        AccessToken.verify.should.have.been.calledWith tokens.access_token
+
+      it 'should provide the tokens', ->
+        success.should.have.been.calledWith sinon.match tokens
+
+      it 'should provide the id claims', ->
+        success.should.have.been.calledWith sinon.match({
+          id_claims: {
+            iss: config.issuer
+          }
+        })
+
+      it 'should provide the access claims', ->
+        success.should.have.been.calledWith sinon.match({
+          access_claims: {
+            aud: config.client_id
+          }
+        })
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
 
 
 

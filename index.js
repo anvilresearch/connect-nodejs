@@ -218,6 +218,8 @@ AnvilConnect.prototype.authorizationParams = authorizationParams
  */
 
 function token (options) {
+  options = options || {}
+
   var self = this
   var uri = this.configuration.token_endpoint
   var code = options.code
@@ -229,12 +231,16 @@ function token (options) {
   }
 
   return new Promise(function (resolve, reject) {
+    if (!code) {
+      return reject(new Error('Missing authorization code'))
+    }
+
     request({
       url: uri,
       method: 'POST',
       form: {
         grant_type: options.grant_type || 'authorization_code',
-        code: options.code,
+        code: code,
         redirect_uri: options.redirect_uri || self.redirect_uri
       },
       json: true,
@@ -328,7 +334,6 @@ function verify (token, options) {
 
   return new Promise(function (resolve, reject) {
     AccessToken.verify(token, options, function (err, claims) {
-      console.log('anvil.verify', err, claims)
       if (err) { return reject(err) }
       resolve(claims)
     })
