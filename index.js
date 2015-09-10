@@ -62,8 +62,15 @@ function discover () {
       json: true
     })
     .then(function (data) {
-      self.configuration = data
-      resolve(data)
+      // data will be an object if the server returned JSON
+      if (typeof data === 'object') {
+        self.configuration = data
+        resolve(data)
+      // If data is not an object, the server is not serving
+      // .well-known/openid-configuration as expected
+      } else {
+        reject(new Error('Unable to retrieve OpenID Connect configuration'))
+      }
     })
     .catch(function (err) {
       reject(err)
