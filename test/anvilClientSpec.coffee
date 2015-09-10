@@ -243,6 +243,40 @@ describe 'Anvil Connect Client', ->
         failure.should.have.been.called
 
 
+    describe 'with an invalid response', ->
+
+      beforeEach (done) ->
+        data = issuer: anvil.issuer
+        anvil = new AnvilConnect config
+
+        nock(anvil.issuer)
+          .get('/.well-known/openid-configuration')
+          .reply(200, 'This isn\'t JSON!')
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.discover()
+          .then(success)
+          .catch(failure)
+
+      after ->
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the openid configuration', ->
+        success.should.not.have.been.called
+
+      it 'should not set configuration', ->
+        expect(anvil.configuration).to.be.undefined
+
+      it 'should not catch an error', ->
+        failure.should.have.been.called
+
+
 
 
   describe 'jwks', ->
