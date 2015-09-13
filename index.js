@@ -125,11 +125,15 @@ AnvilConnect.prototype.getJWKs = getJWKs
 function register (registration) {
   var self = this
   var uri = this.configuration.registration_endpoint
+  var token = this.tokens && this.tokens.access_token
 
   return new Promise(function (resolve, reject) {
     request({
       url: uri,
       method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token
+      },
       json: registration
     })
     .then(function (data) {
