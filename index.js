@@ -22,6 +22,7 @@ function AnvilConnect (options) {
   this.client_id = options.client_id
   this.client_secret = options.client_secret
   this.redirect_uri = options.redirect_uri
+  this.agentOptions = options.agentOptions
 
   // add scope to defaults
   var defaultScope = ['openid', 'profile']
@@ -59,7 +60,8 @@ function discover () {
     request({
       url: uri,
       method: 'GET',
-      json: true
+      json: true,
+      agentOptions: self.agentOptions
     })
     .then(function (data) {
       // data will be an object if the server returned JSON
@@ -94,7 +96,8 @@ function getJWKs () {
     request({
       url: uri,
       method: 'GET',
-      json: true
+      json: true,
+      agentOptions: self.agentOptions
     })
     .then(function (data) {
       // make it easier to reference the JWK by use
@@ -134,7 +137,8 @@ function register (registration) {
       headers: {
         'Authorization': 'Bearer ' + token
       },
-      json: registration
+      json: registration,
+      agentOptions: self.agentOptions
     })
     .then(function (data) {
       self.client_id = data.client_id
@@ -258,7 +262,8 @@ function token (options) {
       auth: {
         user: self.client_id,
         pass: self.client_secret
-      }
+      },
+      agentOptions: self.agentOptions
     })
     .then(function (data) {
 
@@ -318,7 +323,8 @@ function userInfo () {
       headers: {
         'Authorization': 'Bearer ' + token
       },
-      json: true
+      json: true,
+      agentOptions: self.agentOptions
     })
     .then(function (data) {
       resolve(data)
