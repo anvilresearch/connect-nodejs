@@ -152,5 +152,3 @@ function deleteClient (id, options) {
 }
 
 exports.delete = deleteClient
-
-
