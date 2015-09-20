@@ -6,6 +6,7 @@ var qs = require('qs')
 var url = require('url')
 var async = require('async')
 var request = require('request-promise')
+var clients = require('./rest/clients')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
@@ -23,6 +24,14 @@ function AnvilConnect (options) {
   this.client_secret = options.client_secret
   this.redirect_uri = options.redirect_uri
   this.agentOptions = options.agentOptions
+
+  this.clients = {
+    list: clients.list.bind(this),
+    get: clients.get.bind(this),
+    create: clients.create.bind(this),
+    update: clients.update.bind(this),
+    delete: clients.delete.bind(this)
+  }
 
   // add scope to defaults
   var defaultScope = ['openid', 'profile']
