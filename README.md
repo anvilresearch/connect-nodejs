@@ -1,4 +1,5 @@
 # Anvil Connect client for Nodejs
+[![Build Status](https://travis-ci.org/anvilresearch/connect-nodejs.svg?branch=master)](https://travis-ci.org/anvilresearch/connect-nodejs)
 
 [Anvil Connect][connect] is a modern authorization server built to authenticate 
 your users and protect your APIs. It's based on [OAuth 2.0][oauth2] and 
