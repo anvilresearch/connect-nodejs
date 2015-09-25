@@ -7,6 +7,9 @@ var url = require('url')
 var async = require('async')
 var request = require('request-promise')
 var clients = require('./rest/clients')
+var roles = require('./rest/roles')
+var scopes = require('./rest/scopes')
+var users = require('./rest/users')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
@@ -31,6 +34,30 @@ function AnvilConnect (options) {
     create: clients.create.bind(this),
     update: clients.update.bind(this),
     delete: clients.delete.bind(this)
+  }
+
+  this.roles = {
+    list: roles.list.bind(this),
+    get: roles.get.bind(this),
+    create: roles.create.bind(this),
+    update: roles.update.bind(this),
+    delete: roles.delete.bind(this)
+  }
+
+  this.scopes = {
+    list: scopes.list.bind(this),
+    get: scopes.get.bind(this),
+    create: scopes.create.bind(this),
+    update: scopes.update.bind(this),
+    delete: scopes.delete.bind(this)
+  }
+
+  this.users = {
+    list: users.list.bind(this),
+    get: users.get.bind(this),
+    create: users.create.bind(this),
+    update: users.update.bind(this),
+    delete: users.delete.bind(this)
   }
 
   // add scope to defaults
