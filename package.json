@@ -52,6 +52,7 @@
   "devDependencies": {
     "chai": "^3.0.0",
     "coffee-script": "^1.7.1",
+    "mocha": "^2.3.3",
     "nock": "^2.6.0",
     "pem-jwk": "^1.5.1",
     "sinon": "^1.15.4",
