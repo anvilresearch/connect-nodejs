@@ -52,7 +52,7 @@ describe 'REST API Role Scope Methods', ->
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
 
-      it 'should provide the roles', ->
+      it 'should provide the scopes', ->
         success.should.have.been.calledWith sinon.match [{name:'realm'}]
 
       it 'should not catch an error', ->
@@ -87,7 +87,7 @@ describe 'REST API Role Scope Methods', ->
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
 
-      it 'should not provide the roles', ->
+      it 'should not provide the scopes', ->
         success.should.not.have.been.called
 
       it 'should catch an error', ->
@@ -160,7 +160,7 @@ describe 'REST API Role Scope Methods', ->
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
 
-      it 'should not provide the role', ->
+      it 'should not provide the scope', ->
         success.should.not.have.been.called
 
       it 'should catch an error', ->
@@ -196,7 +196,7 @@ describe 'REST API Role Scope Methods', ->
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
 
-      it 'should provide the role', ->
+      it 'should provide the scope', ->
         success.should.have.been.called
 
       it 'should not catch an error', ->
@@ -231,7 +231,7 @@ describe 'REST API Role Scope Methods', ->
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
 
-      it 'should not provide the role', ->
+      it 'should not provide the scope', ->
         success.should.not.have.been.called
 
       it 'should catch an error', ->
