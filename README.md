@@ -100,11 +100,21 @@ var anvil = new AnvilConnect({
 * `redirect_uri` – OPTIONAL uri users will be redirected back to after authenticating with the issuer
 * `scope` – OPTIONAL array of strings, or space delimited string value containing scopes to be included in authorization requests. Defaults to `openid profile`
 
+
 ### OpenID Connect
 
 #### anvil.discover()
+
+Returns a promise providing data retrieved from the `.well-known/openid-configuration` endpoint for the configured issuer.
+
 #### anvil.getJWKs()
+
+Returns a promise providing the JWK set published by the configured issuer. Depends on a prior call to `anvil.discover()`.
+
 #### anvil.register(registration)
+
+Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. Depends on a prior call to `anvil.discover()`.
+
 #### anvil.authorizationUri(options)
 #### anvil.authorizationParams(options)
 #### anvil.token(options)
