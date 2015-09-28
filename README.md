@@ -24,58 +24,6 @@ middleware. These higher-level functions are being split out into a
 $ npm install anvil-connect-nodejs --save
 ```
 
-### Example
-
-```javascript
-var AnvilConnect = require('anvil-connect-nodejs');
-
-var anvil = new AnvilConnect({
-  issuer: 'https://connect.example.com',
-  client_id: 'CLIENT_ID',
-  client_secret: 'CLIENT_SECRET',
-  redirect_uri: 'REDIRECT_URI'
-}) 
-
-// get the discovery document for the OpenID Connect provider
-anvil.discover()
-  .then(function (configuration) {
-    // the call to discover() cached the configuration on the client instance
-    console.log(anvil.configuration)
-
-    // get the public keys for verifying tokens
-    return anvil.getJWKs()  
-  })
-  .then(function (jwks) {
-    // the call to getJwks() cached the JWK set on the client instance too
-    console.log(jwks)
-
-    // get an authorization uri
-    return anvil.authorizationUri()
-  })
-  .then(function (uri) {
-    console.log(uri)
-
-    // handle an authorization response
-    return anvil.token({ code: 'AUTHORIZATION_CODE' })
-  })
-  .then(function (tokens) {
-    // a successful call to tokens() gives us id_token, access_token, 
-    // refresh_token, expiration, and the decoded payloads of the JWTs
-    console.log(tokens)
-
-    // get userinfo
-    // this requires tokens to be set on the client instance
-    // i.e., anvil.tokens
-    return anvil.userInfo()
-  })
-  .then(function (userInfo) {
-    console.log(userInfo)
-
-    // verify an access token
-    return anvil.verify(JWT, { scope: 'research' })
-  })
-```
-
 ### Configure
 
 #### new AnvilConnect(config)
@@ -184,3 +132,55 @@ Accepts an options object and returns an object containing authorization params 
 #### anvil.users.create(data)
 #### anvil.users.update(id, data)
 #### anvil.users.delete(id)
+
+### Example
+
+```javascript
+var AnvilConnect = require('anvil-connect-nodejs');
+
+var anvil = new AnvilConnect({
+  issuer: 'https://connect.example.com',
+  client_id: 'CLIENT_ID',
+  client_secret: 'CLIENT_SECRET',
+  redirect_uri: 'REDIRECT_URI'
+}) 
+
+// get the discovery document for the OpenID Connect provider
+anvil.discover()
+  .then(function (configuration) {
+    // the call to discover() cached the configuration on the client instance
+    console.log(anvil.configuration)
+
+    // get the public keys for verifying tokens
+    return anvil.getJWKs()  
+  })
+  .then(function (jwks) {
+    // the call to getJwks() cached the JWK set on the client instance too
+    console.log(jwks)
+
+    // get an authorization uri
+    return anvil.authorizationUri()
+  })
+  .then(function (uri) {
+    console.log(uri)
+
+    // handle an authorization response
+    return anvil.token({ code: 'AUTHORIZATION_CODE' })
+  })
+  .then(function (tokens) {
+    // a successful call to tokens() gives us id_token, access_token, 
+    // refresh_token, expiration, and the decoded payloads of the JWTs
+    console.log(tokens)
+
+    // get userinfo
+    // this requires tokens to be set on the client instance
+    // i.e., anvil.tokens
+    return anvil.userInfo()
+  })
+  .then(function (userInfo) {
+    console.log(userInfo)
+
+    // verify an access token
+    return anvil.verify(JWT, { scope: 'research' })
+  })
+```
