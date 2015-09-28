@@ -61,7 +61,22 @@ Returns a promise providing the JWK set published by the configured issuer. Depe
 
 #### anvil.register(registration)
 
-Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. Depends on a prior call to `anvil.discover()`.
+Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. You can learn more about [dynamic registration for Anvil Connect][dynamic-registration] in the docs. Depends on a prior call to `anvil.discover()`.
+
+[dynamic-registration]: https://github.com/anvilresearch/connect-docs/blob/master/clients.md#dynamic-registration
+
+```javascript
+anvil.register({
+  client_name: 'Antisocial Network',
+  client_uri: 'https://app.example.com',
+  logo_uri: 'https://app.example.com/assets/logo.png',
+  response_types: ['code'],
+  grant_types: ['authorization_code', 'refresh_token'],
+  default_max_age: 86400 // one day in seconds
+  redirect_uris: ['https://app.example.com/callback.html', 'https://app.example.com/other.html'],
+  post_logout_redirect_uris: ['https://app.example.com']
+})
+```
 
 #### anvil.authorizationUri(options)
 
