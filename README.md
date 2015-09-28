@@ -76,9 +76,12 @@ anvil.discover()
   })
 ```
 
-### Usage
+### Configure
 
 #### new AnvilConnect(config)
+
+### OpenID Connect
+
 #### anvil.discover()
 #### anvil.getJWKs()
 #### anvil.register(registration)
@@ -88,11 +91,17 @@ anvil.discover()
 #### anvil.userInfo()
 #### anvil.verify(token, options)
 
+### Anvil Connect API
+
+#### Clients
+
 #### anvil.clients.list()
 #### anvil.clients.get(id)
 #### anvil.clients.create(data)
 #### anvil.clients.update(id, data)
 #### anvil.clients.delete(id)
+
+#### Roles
 
 #### anvil.roles.list()
 #### anvil.roles.get(id)
@@ -100,11 +109,15 @@ anvil.discover()
 #### anvil.roles.update(id, data)
 #### anvil.roles.delete(id)
 
+#### Scopes
+
 #### anvil.scopes.list()
 #### anvil.scopes.get(id)
 #### anvil.scopes.create(data)
 #### anvil.scopes.update(id, data)
 #### anvil.scopes.delete(id)
+
+#### Users
 
 #### anvil.users.list()
 #### anvil.users.get(id)
