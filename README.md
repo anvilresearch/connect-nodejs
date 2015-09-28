@@ -72,7 +72,7 @@ anvil.register({
   logo_uri: 'https://app.example.com/assets/logo.png',
   response_types: ['code'],
   grant_types: ['authorization_code', 'refresh_token'],
-  default_max_age: 86400 // one day in seconds
+  default_max_age: 86400, // one day in seconds
   redirect_uris: ['https://app.example.com/callback.html', 'https://app.example.com/other.html'],
   post_logout_redirect_uris: ['https://app.example.com']
 })
