@@ -80,6 +80,26 @@ anvil.discover()
 
 #### new AnvilConnect(config)
 
+```javascript
+var AnvilConnect = require('anvil-connect-nodejs');
+
+var anvil = new AnvilConnect({
+  issuer: 'https://connect.example.com',
+  client_id: 'CLIENT_ID',
+  client_secret: 'CLIENT_SECRET',
+  redirect_uri: 'REDIRECT_URI',
+  scope: 'realm'
+})
+```
+
+**options**
+
+* `issuer` – REQUIRED uri of your OpenID Connect provider
+* `client_id` – OPTIONAL client identifier issued by OIDC provider during registration
+* `client_secret` – OPTIONAL confidential value issued by OIDC provider during registration
+* `redirect_uri` – OPTIONAL uri users will be redirected back to after authenticating with the issuer
+* `scope` – OPTIONAL array of strings, or space delimited string value containing scopes to be included in authorization requests. Defaults to `openid profile`
+
 ### OpenID Connect
 
 #### anvil.discover()
