@@ -78,14 +78,31 @@ anvil.register({
 })
 ```
 
-#### anvil.authorizationUri(options)
+#### anvil.authorizationUri([endpoint|options])
 
-Accepts an options object and returns an authorization URI. Depends on a prior call to `anvil.discover()` and `client_id` being configured.
+Accepts a string specifying a non-default endpoint or an options object and returns an authorization URI. Depends on a prior call to `anvil.discover()` and `client_id` being configured.
 
 **options**
 
 * All options accepted by `anvil.authorizationParams()`.
 * `endpoint` – This value is used for the path in the returned URI. Defaults to `authorize`. 
+
+```javascript
+anvil.authorizationUri()
+// 'https://connect.example.com/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=openid%20profile%20more'
+
+anvil.authorizationUri('signin')
+// 'https://connect.example.com/signin?response_type=code&client_id=CLIENT_ID&redirect_uri=REDIRECT_URI&scope=openid%20profile%20more'
+
+anvil.authorizationUri({
+  endpoint: 'connect/google',
+  response_type: 'code id_token token',
+  redirect_uri: 'OTHER_REDIRECT_URI',
+  scope: 'openid profile extra'
+})
+// 'https://connect.example.com/connect/google?response_type=code%20id_token%20token&client_id=CLIENT_ID&redirect_uri=OTHER_REDIRECT_URI&scope=openid%20profile%20extra'
+```
+
 
 #### anvil.authorizationParams(options)
 
