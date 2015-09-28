@@ -116,7 +116,37 @@ Returns a promise providing the JWK set published by the configured issuer. Depe
 Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. Depends on a prior call to `anvil.discover()`.
 
 #### anvil.authorizationUri(options)
+
+Accepts an options object and returns an authorization URI. Depends on a prior call to `anvil.discover()` and `client_id` being configured.
+
+**options**
+
+* All options accepted by `anvil.authorizationParams()`.
+* `endpoint` – This value is used for the path in the returned URI. Defaults to `authorize`. 
+
 #### anvil.authorizationParams(options)
+
+Accepts an options object and returns an object containing authorization params including default values. Depends on `client_id` being configured.
+
+**options**
+
+* `response_type` – defaults to `code`
+* `redirect_uri` – defaults to the `redirect_uri` configured for this client
+* `scope` – defaults to the scope configured for this client
+* `state`
+* `response_mode`
+* `nonce`
+* `display`
+* `prompt`
+* `max_age`
+* `ui_locales`
+* `id_token_hint`
+* `login_hint`
+* `acr_values`
+* `email`
+* `password`
+* `provider`
+
 #### anvil.token(options)
 #### anvil.userInfo()
 #### anvil.verify(token, options)
