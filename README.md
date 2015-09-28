@@ -71,6 +71,16 @@ anvil.discover()
 
 Returns a promise providing the JWK set published by the configured issuer. Depends on a prior call to `anvil.discover()`.
 
+```javascript
+anvil.getJWKs()
+  .then(function (jwks) {
+    // anvil.jwks === jwks
+  })
+  .catch(function (error) {
+    // ...
+  })
+```
+
 #### anvil.register(registration)
 
 Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. You can learn more about [dynamic registration for Anvil Connect][dynamic-registration] in the docs. Depends on a prior call to `anvil.discover()`.
