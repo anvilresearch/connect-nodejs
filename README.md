@@ -53,7 +53,17 @@ var anvil = new AnvilConnect({
 
 #### anvil.discover()
 
-Returns a promise providing data retrieved from the `.well-known/openid-configuration` endpoint for the configured issuer.
+Returns a promise providing data retrieved from the `.well-known/openid-configuration` endpoint for the configured issuer. Sets the issuer's OpenID Metadata as `anvil.configuration`.
+
+```javascript
+anvil.discover()
+  .then(function (openidMetadata) {
+    // anvil.configuration === openidMetadata
+  })
+  .catch(function (error) {
+    // ...
+  })
+```
 
 #### anvil.getJWKs()
 
