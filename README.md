@@ -150,6 +150,9 @@ Accepts an options object and returns an object containing authorization params 
 * `provider`
 
 #### anvil.token(options)
+
+Given an authorization code is provided as the `code` option, this method will exchange the auth code for a set of token credentials, then verify the signatures and decode the payloads. Depends on `client_id` and `client_secret` being configured, and prior calls to `anvil.discover()` and `anvil.getJWKs()`.
+
 #### anvil.userInfo()
 #### anvil.verify(token, options)
 
