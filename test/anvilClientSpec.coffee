@@ -896,14 +896,32 @@ describe 'Anvil Connect Client', ->
 
   describe 'userInfo', ->
 
+    describe 'with a missing access token', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = anvil.userInfo().then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide userInfo', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
     describe 'with a successful response', ->
 
       beforeEach (done) ->
         anvil = new AnvilConnect config
         anvil.configuration = openid
-        anvil.tokens =
-          access_token: 'jwt1'
-          id_token: 'jwt2'
 
         nock(anvil.issuer)
           .get('/userinfo')
@@ -913,7 +931,7 @@ describe 'Anvil Connect Client', ->
           done()
         failure = sinon.spy ->
           done()
-        promise = anvil.userInfo()
+        promise = anvil.userInfo({ token: 'token' })
           .then(success)
           .catch(failure)
 
@@ -935,9 +953,6 @@ describe 'Anvil Connect Client', ->
       beforeEach (done) ->
         anvil = new AnvilConnect config
         anvil.configuration = openid
-        anvil.tokens =
-          access_token: 'jwt1'
-          id_token: 'jwt2'
 
         nock(anvil.issuer)
           .get('/userinfo')
@@ -947,7 +962,7 @@ describe 'Anvil Connect Client', ->
           done()
         failure = sinon.spy ->
           done()
-        promise = anvil.userInfo()
+        promise = anvil.userInfo({ token: 'token' })
           .then(success)
           .catch(failure)
 
@@ -961,7 +976,7 @@ describe 'Anvil Connect Client', ->
         success.should.not.have.been.called
 
       it 'should catch an error', ->
-        failure.should.have.been.called
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
 
 
 

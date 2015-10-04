@@ -348,17 +348,22 @@ AnvilConnect.prototype.token = token
  * User Info
  */
 
-function userInfo () {
+function userInfo (options) {
+  options = options || {}
+
   var uri = this.configuration.userinfo_endpoint
-  var token = this.tokens.access_token
   var self = this
 
   return new Promise(function (resolve, reject) {
+    if (!options.token) {
+      return reject(new Error('Missing access token'))
+    }
+
     request({
       url: uri,
       method: 'GET',
       headers: {
-        'Authorization': 'Bearer ' + token
+        'Authorization': 'Bearer ' + options.token
       },
       json: true,
       agentOptions: self.agentOptions
