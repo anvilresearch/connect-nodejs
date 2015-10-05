@@ -2,34 +2,16 @@
  * Module dependencies
  */
 
-var request = require('request-promise')
+var request = require('../lib/request')
 
 /**
  * List Scopes
  */
 
 function listScopes (options) {
-  var uri = this.configuration.issuer + '/v1/scopes'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/scopes'
+  return request.bind(this)(options)
 }
 
 exports.list = listScopes
@@ -39,27 +21,9 @@ exports.list = listScopes
  */
 
 function getScope (id, options) {
-  var uri = this.configuration.issuer + '/v1/scopes/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/scopes/' + id
+  return request.bind(this)(options)
 }
 
 exports.get = getScope
@@ -69,27 +33,11 @@ exports.get = getScope
  */
 
 function createScope (data, options) {
-  var uri = this.configuration.issuer + '/v1/scopes'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/scopes'
+  options.method = 'POST'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.create = createScope
@@ -99,27 +47,11 @@ exports.create = createScope
  */
 
 function updateScope (id, data, options) {
-  var uri = this.configuration.issuer + '/v1/scopes/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'PATCH',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/scopes/' + id
+  options.method = 'PATCH'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.update = updateScope
@@ -129,26 +61,11 @@ exports.update = updateScope
  */
 
 function deleteScope (id, options) {
-  var uri = this.configuration.issuer + '/v1/scopes/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/scopes/' + id
+  options.method = 'DELETE'
+  delete options.json
+  return request.bind(this)(options)
 }
 
 exports.delete = deleteScope

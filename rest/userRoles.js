@@ -2,34 +2,16 @@
  * Module dependencies
  */
 
-var request = require('request-promise')
+var request = require('../lib/request')
 
 /**
  * List Roles
  */
 
 function listRoles (userId, options) {
-  var uri = this.configuration.issuer + '/v1/users/' + userId + '/roles'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users/' + userId + '/roles'
+  return request.bind(this)(options)
 }
 
 exports.listRoles = listRoles
@@ -38,28 +20,11 @@ exports.listRoles = listRoles
  * Add Role
  */
 
-function addRole (userId, role) {
-  var uri = this.configuration.issuer + '/v1/users/' + userId + '/roles/' + role
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+function addRole (user, role, options) {
+  options = options || {}
+  options.url = '/v1/users/' + user + '/roles/' + role
+  options.method = 'PUT'
+  return request.bind(this)(options)
 }
 
 exports.addRole = addRole
@@ -68,27 +33,12 @@ exports.addRole = addRole
  * Delete Role
  */
 
-function deleteRole (userId, role) {
-  var uri = this.configuration.issuer + '/v1/users/' + userId + '/roles/' + role
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+function deleteRole (user, role, options) {
+  options = options || {}
+  options.url = '/v1/users/' + user + '/roles/' + role
+  options.method = 'DELETE'
+  delete options.json
+  return request.bind(this)(options)
 }
 
 exports.deleteRole = deleteRole

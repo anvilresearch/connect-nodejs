@@ -35,10 +35,9 @@ describe 'REST API Role Scope Methods', ->
         instance =
           configuration:
             issuer: 'https://connect.anvil.io'
-          tokens:
-            access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .get('/v1/roles/authority/scopes')
           .reply(200, [{name: 'realm'}])
@@ -46,8 +45,9 @@ describe 'REST API Role Scope Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = roleScopes.listScopes.bind(instance)('authority')
-          .then(success, failure)
+        promise = roleScopes.listScopes.bind(instance)('authority', {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -106,10 +106,9 @@ describe 'REST API Role Scope Methods', ->
         instance =
           configuration:
             issuer: 'https://connect.anvil.io'
-          tokens:
-            access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .put('/v1/roles/authority/scopes/realm')
           .reply(201, {
@@ -119,8 +118,9 @@ describe 'REST API Role Scope Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = roleScopes.addScope.bind(instance)('authority', 'realm')
-                    .then(success, failure)
+        promise = roleScopes.addScope.bind(instance)('authority', 'realm', {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -144,6 +144,7 @@ describe 'REST API Role Scope Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .put('/v1/roles/invalid/scopes/addition')
           .reply(400, 'Bad request')
@@ -151,11 +152,9 @@ describe 'REST API Role Scope Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = roleScopes.addScope.bind(instance)('invalid', 'addition')
-          .then(success, failure)
-
-      after ->
-        nock.cleanAll()
+        promise = roleScopes.addScope.bind(instance)('invalid', 'addition', {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -183,6 +182,7 @@ describe 'REST API Role Scope Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .delete('/v1/roles/authority/scopes/realm')
           .reply(204)
@@ -190,8 +190,9 @@ describe 'REST API Role Scope Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = roleScopes.deleteScope.bind(instance)('authority', 'realm')
-          .then(success, failure)
+        promise = roleScopes.deleteScope.bind(instance)('authority', 'realm', {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -215,6 +216,7 @@ describe 'REST API Role Scope Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .delete('/v1/roles/invalid/scopes/deletion')
           .reply(404, 'Not found')
@@ -222,8 +224,9 @@ describe 'REST API Role Scope Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = roleScopes.deleteScope.bind(instance)('invalid', 'deletion')
-          .then(success, failure)
+        promise = roleScopes.deleteScope.bind(instance)('invalid', 'deletion', {
+          token: 'token'
+        }).then(success, failure)
 
       after ->
         nock.cleanAll()
