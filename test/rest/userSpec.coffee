@@ -1,5 +1,4 @@
 # Test dependencies
-#fs          = require 'fs'
 cwd         = process.cwd()
 path        = require 'path'
 chai        = require 'chai'
@@ -27,18 +26,17 @@ describe 'REST API User Methods', ->
 
   describe 'list', ->
 
-    describe 'with a successful response', ->
+    describe 'with a missing access token', ->
 
       {promise,success,failure} = {}
 
-      before (done) ->
+      beforeEach (done) ->
         instance =
           configuration:
             issuer: 'https://connect.anvil.io'
-          tokens:
-            access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .get('/v1/users')
           .reply(200, [{_id: 'uuid'}])
@@ -47,6 +45,37 @@ describe 'REST API User Methods', ->
         failure = sinon.spy -> done()
 
         promise = users.list.bind(instance)()
+          .then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide users', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
+    describe 'with a successful response', ->
+
+      {promise,success,failure} = {}
+
+      before (done) ->
+        instance =
+          configuration:
+            issuer: 'https://connect.anvil.io'
+          agentOptions: {}
+
+        nock.cleanAll()
+        nock(instance.configuration.issuer)
+          .get('/v1/users')
+          .reply(200, [{_id: 'uuid'}])
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = users.list.bind(instance)({ token: 'token' })
           .then(success, failure)
 
       it 'should return a promise', ->
@@ -67,10 +96,9 @@ describe 'REST API User Methods', ->
         instance =
           configuration:
             issuer: 'https://connect.anvil.io'
-          tokens:
-            access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .get('/v1/users')
           .reply(404, 'Not found')
@@ -78,11 +106,8 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.list.bind(instance)()
+        promise = users.list.bind(instance)({ token: 'token' })
           .then(success, failure)
-
-      after ->
-        nock.cleanAll()
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -96,6 +121,37 @@ describe 'REST API User Methods', ->
 
   describe 'get', ->
 
+    describe 'with a missing access token', ->
+
+      {promise,success,failure} = {}
+
+      beforeEach (done) ->
+        instance =
+          configuration:
+            issuer: 'https://connect.anvil.io'
+          agentOptions: {}
+
+        nock.cleanAll()
+        nock(instance.configuration.issuer)
+          .get('/v1/users/uuid')
+          .reply(200, [{_id: 'uuid'}])
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = users.get.bind(instance)('uuid')
+          .then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide users', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
     describe 'with a successful response', ->
 
       {promise,success,failure} = {}
@@ -108,6 +164,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .get('/v1/users/uuid')
           .reply(200, {_id: 'uuid'})
@@ -115,7 +172,7 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.get.bind(instance)('uuid')
+        promise = users.get.bind(instance)('uuid', { token: 'token' })
           .then(success, failure)
 
       it 'should return a promise', ->
@@ -140,6 +197,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .get('/v1/users/uuid')
           .reply(404, 'Not found')
@@ -147,11 +205,8 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.get.bind(instance)('uuid')
+        promise = users.get.bind(instance)('uuid', { token: 'token' })
           .then(success, failure)
-
-      after ->
-        nock.cleanAll()
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -167,6 +222,37 @@ describe 'REST API User Methods', ->
 
   describe 'create', ->
 
+    describe 'with a missing access token', ->
+
+      {promise,success,failure} = {}
+
+      beforeEach (done) ->
+        instance =
+          configuration:
+            issuer: 'https://connect.anvil.io'
+          agentOptions: {}
+
+        nock.cleanAll()
+        nock(instance.configuration.issuer)
+          .post('/v1/users')
+          .reply(200, [{_id: 'uuid'}])
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = users.create.bind(instance)({})
+          .then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide user', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
     describe 'with a successful response', ->
 
       {promise,success,failure} = {}
@@ -179,6 +265,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .post('/v1/users', {
             redirect_uris: ['https://example.anvil.io']
@@ -193,6 +280,8 @@ describe 'REST API User Methods', ->
 
         promise = users.create.bind(instance)({
           redirect_uris: ['https://example.anvil.io']
+        }, {
+          token: 'token'
         }).then(success, failure)
 
       it 'should return a promise', ->
@@ -217,6 +306,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .post('/v1/users', {})
           .reply(400, 'Bad request')
@@ -224,11 +314,11 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.create.bind(instance)({})
-          .then(success, failure)
-
-      after ->
-        nock.cleanAll()
+        promise = users.create.bind(instance)({
+          redirect_uris: ['https://example.anvil.io']
+        }, {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -244,6 +334,38 @@ describe 'REST API User Methods', ->
 
   describe 'update', ->
 
+    describe 'with a missing access token', ->
+
+      {promise,success,failure} = {}
+
+      beforeEach (done) ->
+        instance =
+          configuration:
+            issuer: 'https://connect.anvil.io'
+          agentOptions: {}
+
+        nock.cleanAll()
+        nock(instance.configuration.issuer)
+          .patch('/v1/users/uuid')
+          .reply(200, {_id: 'uuid'})
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = users.update.bind(instance)('uuid', {})
+          .then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide user', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
+
     describe 'with a successful response', ->
 
       {promise,success,failure} = {}
@@ -256,6 +378,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .patch('/v1/users/uuid', {
             redirect_uris: ['https://example.anvil.io']
@@ -270,6 +393,8 @@ describe 'REST API User Methods', ->
 
         promise = users.update.bind(instance)('uuid', {
           redirect_uris: ['https://example.anvil.io']
+        }, {
+          token: 'token'
         }).then(success, failure)
 
       it 'should return a promise', ->
@@ -296,6 +421,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .patch('/v1/users/uuid', {})
           .reply(400, 'Bad request')
@@ -303,11 +429,11 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.update.bind(instance)('uuid', {})
-          .then(success, failure)
-
-      after ->
-        nock.cleanAll()
+        promise = users.update.bind(instance)('uuid', {
+          redirect_uris: ['https://example.anvil.io']
+        }, {
+          token: 'token'
+        }).then(success, failure)
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise
@@ -322,6 +448,38 @@ describe 'REST API User Methods', ->
 
   describe 'delete', ->
 
+    describe 'with a missing access token', ->
+
+      {promise,success,failure} = {}
+
+      beforeEach (done) ->
+        instance =
+          configuration:
+            issuer: 'https://connect.anvil.io'
+          agentOptions: {}
+
+        nock.cleanAll()
+        nock(instance.configuration.issuer)
+          .delete('/v1/users/uuid')
+          .reply(401, 'Unauthorized')
+
+        success = sinon.spy -> done()
+        failure = sinon.spy -> done()
+
+        promise = users.delete.bind(instance)('uuid')
+          .then(success, failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide user', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match.instanceOf Error
+
+
+
     describe 'with a successful response', ->
 
       {promise,success,failure} = {}
@@ -334,6 +492,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .delete('/v1/users/uuid')
           .reply(204)
@@ -341,7 +500,7 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.delete.bind(instance)('uuid')
+        promise = users.delete.bind(instance)('uuid', { token: 'token' })
           .then(success, failure)
 
       it 'should return a promise', ->
@@ -366,6 +525,7 @@ describe 'REST API User Methods', ->
             access_token: 'random'
           agentOptions: {}
 
+        nock.cleanAll()
         nock(instance.configuration.issuer)
           .delete('/v1/users/uuid')
           .reply(404, 'Not found')
@@ -373,11 +533,8 @@ describe 'REST API User Methods', ->
         success = sinon.spy -> done()
         failure = sinon.spy -> done()
 
-        promise = users.delete.bind(instance)('uuid')
+        promise = users.delete.bind(instance)('uuid', { token: 'token' })
           .then(success, failure)
-
-      after ->
-        nock.cleanAll()
 
       it 'should return a promise', ->
         promise.should.be.instanceof Promise

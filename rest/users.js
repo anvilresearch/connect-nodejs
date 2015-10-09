@@ -2,34 +2,16 @@
  * Module dependencies
  */
 
-var request = require('request-promise')
+var request = require('../lib/request')
 
 /**
  * List Users
  */
 
 function listUsers (options) {
-  var uri = this.configuration.issuer + '/v1/users'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users'
+  return request.bind(this)(options)
 }
 
 exports.list = listUsers
@@ -39,27 +21,9 @@ exports.list = listUsers
  */
 
 function getUser (id, options) {
-  var uri = this.configuration.issuer + '/v1/users/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users/' + id
+  return request.bind(this)(options)
 }
 
 exports.get = getUser
@@ -69,27 +33,11 @@ exports.get = getUser
  */
 
 function createUser (data, options) {
-  var uri = this.configuration.issuer + '/v1/users'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users'
+  options.method = 'POST'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.create = createUser
@@ -99,27 +47,11 @@ exports.create = createUser
  */
 
 function updateUser (id, data, options) {
-  var uri = this.configuration.issuer + '/v1/users/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'PATCH',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users/' + id
+  options.method = 'PATCH'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.update = updateUser
@@ -129,26 +61,11 @@ exports.update = updateUser
  */
 
 function deleteUser (id, options) {
-  var uri = this.configuration.issuer + '/v1/users/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/users/' + id
+  options.method = 'DELETE'
+  delete options.json
+  return request.bind(this)(options)
 }
 
 exports.delete = deleteUser

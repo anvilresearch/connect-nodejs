@@ -8,8 +8,10 @@ var async = require('async')
 var request = require('request-promise')
 var clients = require('./rest/clients')
 var roles = require('./rest/roles')
+var roleScopes = require('./rest/roleScopes')
 var scopes = require('./rest/scopes')
 var users = require('./rest/users')
+var userRoles = require('./rest/userRoles')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
@@ -41,7 +43,12 @@ function AnvilConnect (options) {
     get: roles.get.bind(this),
     create: roles.create.bind(this),
     update: roles.update.bind(this),
-    delete: roles.delete.bind(this)
+    delete: roles.delete.bind(this),
+    scopes: {
+      list: roleScopes.listScopes.bind(this),
+      add: roleScopes.addScope.bind(this),
+      delete: roleScopes.deleteScope.bind(this)
+    }
   }
 
   this.scopes = {
@@ -57,7 +64,12 @@ function AnvilConnect (options) {
     get: users.get.bind(this),
     create: users.create.bind(this),
     update: users.update.bind(this),
-    delete: users.delete.bind(this)
+    delete: users.delete.bind(this),
+    roles: {
+      list: userRoles.listRoles.bind(this),
+      add: userRoles.addRole.bind(this),
+      delete: userRoles.deleteRole.bind(this)
+    }
   }
 
   // add scope to defaults
@@ -348,17 +360,22 @@ AnvilConnect.prototype.token = token
  * User Info
  */
 
-function userInfo () {
+function userInfo (options) {
+  options = options || {}
+
   var uri = this.configuration.userinfo_endpoint
-  var token = this.tokens.access_token
   var self = this
 
   return new Promise(function (resolve, reject) {
+    if (!options.token) {
+      return reject(new Error('Missing access token'))
+    }
+
     request({
       url: uri,
       method: 'GET',
       headers: {
-        'Authorization': 'Bearer ' + token
+        'Authorization': 'Bearer ' + options.token
       },
       json: true,
       agentOptions: self.agentOptions

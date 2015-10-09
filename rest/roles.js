@@ -2,34 +2,16 @@
  * Module dependencies
  */
 
-var request = require('request-promise')
+var request = require('../lib/request')
 
 /**
  * List Roles
  */
 
 function listRoles (options) {
-  var uri = this.configuration.issuer + '/v1/roles'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/roles'
+  return request.bind(this)(options)
 }
 
 exports.list = listRoles
@@ -39,27 +21,9 @@ exports.list = listRoles
  */
 
 function getRole (id, options) {
-  var uri = this.configuration.issuer + '/v1/roles/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/roles/' + id
+  return request.bind(this)(options)
 }
 
 exports.get = getRole
@@ -69,27 +33,11 @@ exports.get = getRole
  */
 
 function createRole (data, options) {
-  var uri = this.configuration.issuer + '/v1/roles'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/roles'
+  options.method = 'POST'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.create = createRole
@@ -99,27 +47,11 @@ exports.create = createRole
  */
 
 function updateRole (id, data, options) {
-  var uri = this.configuration.issuer + '/v1/roles/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'PATCH',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/roles/' + id
+  options.method = 'PATCH'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.update = updateRole
@@ -129,26 +61,11 @@ exports.update = updateRole
  */
 
 function deleteRole (id, options) {
-  var uri = this.configuration.issuer + '/v1/roles/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/roles/' + id
+  options.method = 'DELETE'
+  delete options.json
+  return request.bind(this)(options)
 }
 
 exports.delete = deleteRole

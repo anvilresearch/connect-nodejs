@@ -2,34 +2,16 @@
  * Module dependencies
  */
 
-var request = require('request-promise')
+var request = require('../lib/request')
 
 /**
  * List Clients
  */
 
 function listClients (options) {
-  var uri = this.configuration.issuer + '/v1/clients'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/clients'
+  return request.bind(this)(options)
 }
 
 exports.list = listClients
@@ -39,27 +21,9 @@ exports.list = listClients
  */
 
 function getClient (id, options) {
-  var uri = this.configuration.issuer + '/v1/clients/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/clients/' + id
+  return request.bind(this)(options)
 }
 
 exports.get = getClient
@@ -69,27 +33,11 @@ exports.get = getClient
  */
 
 function createClient (data, options) {
-  var uri = this.configuration.issuer + '/v1/clients'
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/clients'
+  options.method = 'POST'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.create = createClient
@@ -99,27 +47,11 @@ exports.create = createClient
  */
 
 function updateClient (id, data, options) {
-  var uri = this.configuration.issuer + '/v1/clients/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'PATCH',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: data,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/clients/' + id
+  options.method = 'PATCH'
+  options.json = data
+  return request.bind(this)(options)
 }
 
 exports.update = updateClient
@@ -129,26 +61,11 @@ exports.update = updateClient
  */
 
 function deleteClient (id, options) {
-  var uri = this.configuration.issuer + '/v1/clients/' + id
-  var token = this.tokens.access_token
-  var self = this
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'DELETE',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
+  options = options || {}
+  options.url = '/v1/clients/' + id
+  options.method = 'DELETE'
+  delete options.json
+  return request.bind(this)(options)
 }
 
 exports.delete = deleteClient
