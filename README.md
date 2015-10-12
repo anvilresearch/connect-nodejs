@@ -230,9 +230,7 @@ anvil.discover()
     console.log(tokens)
 
     // get userinfo
-    // this requires tokens to be set on the client instance
-    // i.e., anvil.tokens
-    return anvil.userInfo()
+    return anvil.userInfo({ token: tokens.access_token })
   })
   .then(function (userInfo) {
     console.log(userInfo)
