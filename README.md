@@ -57,6 +57,8 @@ Returns a promise providing [OpenID Metadata][oidc-meta] retrieved from the `.we
 
 [oidc-meta]: http://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 
+**example**
+
 ```javascript
 anvil.discover()
   .then(function (openidMetadata) {
@@ -70,6 +72,8 @@ anvil.discover()
 #### anvil.getJWKs()
 
 Returns a promise providing the JWK set published by the configured issuer. Depends on a prior call to `anvil.discover()`.
+
+**example**
 
 ```javascript
 anvil.getJWKs()
@@ -86,6 +90,8 @@ anvil.getJWKs()
 Dynamically registers a new client with the configured issuer and returns a promise for the new client registration. You can learn more about [dynamic registration for Anvil Connect][dynamic-registration] in the docs. Depends on a prior call to `anvil.discover()`.
 
 [dynamic-registration]: https://github.com/anvilresearch/connect-docs/blob/master/clients.md#dynamic-registration
+
+**example**
 
 ```javascript
 anvil.register({
@@ -108,6 +114,8 @@ Accepts a string specifying a non-default endpoint or an options object and retu
 
 * All options accepted by `anvil.authorizationParams()`.
 * `endpoint` – This value is used for the path in the returned URI. Defaults to `authorize`. 
+
+**example**
 
 ```javascript
 anvil.authorizationUri()
