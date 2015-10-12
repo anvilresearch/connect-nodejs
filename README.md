@@ -171,7 +171,20 @@ Given an authorization code is provided as the `code` option, this method will e
 anvil.token({ code: 'AUTHORIZATION_CODE' })
 ```
 
-#### anvil.userInfo()
+#### anvil.userInfo(options)
+
+Get user info from the issuer.
+
+**options**
+
+* `token` – access token
+
+**example**
+
+```javascript
+anvil.userInfo({ token: 'ACCESS_TOKEN' })
+```
+
 #### anvil.verify(token, options)
 
 ### Anvil Connect API
