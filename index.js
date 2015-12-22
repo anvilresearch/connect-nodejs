@@ -6,6 +6,7 @@ var qs = require('qs')
 var url = require('url')
 var async = require('async')
 var request = require('request-promise')
+var clientRoles = require('./rest/clientRoles')
 var clients = require('./rest/clients')
 var roles = require('./rest/roles')
 var roleScopes = require('./rest/roleScopes')
@@ -35,7 +36,12 @@ function AnvilConnect (options) {
     get: clients.get.bind(this),
     create: clients.create.bind(this),
     update: clients.update.bind(this),
-    delete: clients.delete.bind(this)
+    delete: clients.delete.bind(this),
+    roles: {
+      list: clientRoles.listRoles.bind(this),
+      add: clientRoles.addRole.bind(this),
+      delete: clientRoles.deleteRole.bind(this)
+    }
   }
 
   this.roles = {
