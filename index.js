@@ -304,20 +304,20 @@ function token (options) {
       return reject(new Error('Missing authorization code'))
     }
 
-    var form_request_data = {
+    var formRequestData = {
       code: code,
       grant_type: options.grant_type || 'authorization_code',
       redirect_uri: options.redirect_uri || self.redirect_uri
     }
 
-    if (form_request_data.grant_type === 'client_credentials') {
-      form_request_data.scope = options.scope || self.scope
+    if (formRequestData.grant_type === 'client_credentials') {
+      formRequestData.scope = options.scope || self.scope
     }
 
     request({
       url: uri,
       method: 'POST',
-      form: form_request_data,
+      form: formRequestData,
       json: true,
       auth: {
         user: self.client_id,
@@ -326,8 +326,7 @@ function token (options) {
       agentOptions: self.agentOptions
     })
     .then(function (data) {
-
-      var verify_claims = {
+      var verifyClaims = {
         access_claims: function (done) {
           AccessToken.verify(data.access_token, {
             key: self.jwks.keys[0],
@@ -341,8 +340,8 @@ function token (options) {
 
       // when requesting a token using client credentials no ID information is
       // returned
-      if (form_request_data.grant_type !== 'client_credentials') {
-        verify_claims.id_claims = function (done) {
+      if (formRequestData.grant_type !== 'client_credentials') {
+        verifyClaims.id_claims = function (done) {
           IDToken.verify(data.id_token, {
             iss: self.issuer,
             aud: self.client_id,
@@ -355,7 +354,7 @@ function token (options) {
       }
 
       // verify tokens
-      async.parallel(verify_claims, function (err, result) {
+      async.parallel(verifyClaims, function (err, result) {
         if (err) {
           return reject(err)
         }
