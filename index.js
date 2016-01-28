@@ -304,14 +304,20 @@ function token (options) {
       return reject(new Error('Missing authorization code'))
     }
 
+    var formRequestData = {
+      code: code,
+      grant_type: options.grant_type || 'authorization_code',
+      redirect_uri: options.redirect_uri || self.redirect_uri
+    }
+
+    if (formRequestData.grant_type === 'client_credentials') {
+      formRequestData.scope = options.scope || self.scope
+    }
+
     request({
       url: uri,
       method: 'POST',
-      form: {
-        grant_type: options.grant_type || 'authorization_code',
-        code: code,
-        redirect_uri: options.redirect_uri || self.redirect_uri
-      },
+      form: formRequestData,
       json: true,
       auth: {
         user: self.client_id,
@@ -320,20 +326,7 @@ function token (options) {
       agentOptions: self.agentOptions
     })
     .then(function (data) {
-
-      // verify tokens
-      async.parallel({
-        id_claims: function (done) {
-          IDToken.verify(data.id_token, {
-            iss: self.issuer,
-            aud: self.client_id,
-            key: self.jwks.keys[0]
-          }, function (err, token) {
-            if (err) { return done(err) }
-            done(null, token.payload)
-          })
-        },
-
+      var verifyClaims = {
         access_claims: function (done) {
           AccessToken.verify(data.access_token, {
             key: self.jwks.keys[0],
@@ -343,7 +336,25 @@ function token (options) {
             done(null, claims)
           })
         }
-      }, function (err, result) {
+      }
+
+      // when requesting a token using client credentials no ID information is
+      // returned
+      if (formRequestData.grant_type !== 'client_credentials') {
+        verifyClaims.id_claims = function (done) {
+          IDToken.verify(data.id_token, {
+            iss: self.issuer,
+            aud: self.client_id,
+            key: self.jwks.keys[0]
+          }, function (err, token) {
+            if (err) { return done(err) }
+            done(null, token.payload)
+          })
+        }
+      }
+
+      // verify tokens
+      async.parallel(verifyClaims, function (err, result) {
         if (err) {
           return reject(err)
         }

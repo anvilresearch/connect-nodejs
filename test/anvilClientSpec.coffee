@@ -892,6 +892,84 @@ describe 'Anvil Connect Client', ->
         failure.should.not.have.been.called
 
 
+    describe 'with client_credentials grant', ->
+
+      {tokens} = {}
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.sig = jwks.keys[0]
+
+        tokens =
+          access_token: 'valid.access.token'
+
+        nock(anvil.issuer)
+          .post('/token', {
+            code: 'random',
+            grant_type: 'client_credentials',
+            redirect_uri: config.redirect_uri,
+            scope: 'realm'
+          })
+          .basicAuth({
+            user: config.client_id
+            pass: config.client_secret
+          })
+          .reply(200, tokens)
+
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, {
+          aud: config.client_id
+        })
+
+        sinon.stub(IDToken, 'verify')
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.token({
+          code: 'random',
+          grant_type: 'client_credentials',
+          scope: 'realm'
+        }).then(success)
+          .catch(failure)
+
+      afterEach ->
+        AccessToken.verify.restore()
+        IDToken.verify.restore()
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should NOT receive an id token', ->
+        IDToken.verify.should.not.have.been.called
+
+      it 'should verify the access token', ->
+        AccessToken.verify.should.have.been.calledWith tokens.access_token
+
+      it 'should provide the tokens', ->
+        success.should.have.been.calledWith sinon.match tokens
+
+      it 'should NOT provide the id claims', ->
+        success.should.not.have.been.calledWith sinon.match({
+          id_claims: {
+            iss: config.issuer
+          }
+        })
+
+      it 'should provide the access claims', ->
+        success.should.have.been.calledWith sinon.match({
+          access_claims: {
+            aud: config.client_id
+          }
+        })
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
+
+
 
 
   describe 'userInfo', ->
