@@ -517,7 +517,183 @@ describe 'Anvil Connect Client', ->
       })
       expect(params.unknown).to.be.undefined
 
+  describe 'refresh', ->
 
+    describe 'with missing options argument', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.refresh()
+        .then(success)
+        .catch(failure)
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.calledWith sinon.match({
+          message: 'Missing refresh_token'
+        })
+
+    describe 'with error response', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+
+        nock(anvil.issuer)
+        .post('/token', {
+          grant_type: 'refresh_token',
+          refresh_token: 'random'
+        })
+        .basicAuth({
+          user: config.client_id
+          pass: config.client_secret
+        })
+        .reply(400, {
+          error: 'invalid_request'
+        })
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.refresh({ refresh_token: 'random' })
+        .then(success)
+        .catch(failure)
+
+      after ->
+        nock.cleanAll()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.called
+
+    describe 'with token response and signature ko', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.tokens =
+          access_token: 'jwt1'
+          id_token: 'jwt2'
+
+        nock(anvil.issuer)
+        .post('/token', {
+          grant_type: 'refresh_token',
+          refresh_token: 'fake_refresh_token'
+        })
+        .basicAuth({
+          user: config.client_id
+          pass: config.client_secret
+        })
+        .reply(200, anvil.tokens)
+
+        sinon.stub(AccessToken, 'refresh').callsArgWith(2, null, anvil.tokens)
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, new Error(), null)
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.refresh({ refresh_token: 'fake_refresh_token' })
+        .then(success)
+        .catch(failure)
+
+      after ->
+        nock.cleanAll()
+
+      afterEach ->
+        AccessToken.refresh.restore()
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should not provide the tokens', ->
+        success.should.not.have.been.called
+
+      it 'should catch an error', ->
+        failure.should.have.been.called
+
+      it 'should AccessToken.refresh called once', ->
+        AccessToken.refresh.should.have.been.calledOnce
+
+      it 'should AccessToken.verify called once', ->
+        AccessToken.verify.should.have.been.calledOnce
+
+    describe 'with token response and signature ok', ->
+
+      beforeEach (done) ->
+        anvil = new AnvilConnect config
+        anvil.configuration = openid
+        anvil.jwks = jwks
+        anvil.jwks.keys[0] = jwks.keys[0]
+        anvil.tokens =
+          access_token: 'jwt1'
+          id_token: 'jwt2'
+
+        nock(anvil.issuer)
+        .post('/token', {
+          grant_type: 'refresh_token',
+          refresh_token: 'fake_refresh_token'
+        })
+        .basicAuth({
+          user: config.client_id
+          pass: config.client_secret
+        })
+        .reply(200, anvil.tokens)
+
+        sinon.stub(AccessToken, 'refresh').callsArgWith(2, null, anvil.tokens)
+        sinon.stub(AccessToken, 'verify').callsArgWith(2, null, anvil.tokens)
+
+        success = sinon.spy ->
+          done()
+        failure = sinon.spy ->
+          done()
+        promise = anvil.refresh({ refresh_token: 'fake_refresh_token' })
+        .then(success)
+        .catch(failure)
+
+      after ->
+        nock.cleanAll()
+
+      afterEach ->
+        AccessToken.refresh.restore()
+        AccessToken.verify.restore()
+
+      it 'should return a promise', ->
+        promise.should.be.instanceof Promise
+
+      it 'should provide the tokens', ->
+        success.should.have.been.called
+
+      it 'should not catch an error', ->
+        failure.should.not.have.been.called
+
+      it 'should AccessToken.refresh called once', ->
+        AccessToken.refresh.should.have.been.calledOnce
+
+      it 'should AccessToken.verify called once', ->
+        AccessToken.verify.should.have.been.calledOnce
+
+      it 'should provide the tokens', ->
+        success.should.have.been.calledWith sinon.match anvil.tokens
 
   describe 'token', ->
 

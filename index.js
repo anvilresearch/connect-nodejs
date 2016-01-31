@@ -283,6 +283,42 @@ function authorizationParams (options) {
 AnvilConnect.prototype.authorizationParams = authorizationParams
 
 /**
+ * Refresh
+ */
+
+function refresh (options) {
+  options = options || {}
+
+  var self = this
+  var refresh_token = options.refresh_token
+  return new Promise(function (resolve, reject) {
+    if (!refresh_token) {
+      return reject(new Error('Missing refresh_token'))
+    }
+    AccessToken.refresh(refresh_token, {
+      issuer: self.issuer,
+      client_id: self.client_id,
+      client_secret: self.client_secret
+    }, function (err, token) {
+      if (err) {
+        return reject(err)
+      }
+      AccessToken.verify(token.access_token, {
+        key: self.jwks.keys[ 0 ],
+        issuer: self.issuer
+      }, function (err) {
+        if (err) {
+          return reject(err)
+        }
+        return resolve(token)
+      })
+    })
+  })
+}
+
+AnvilConnect.prototype.refresh = refresh
+
+/**
  * Token
  */
 
