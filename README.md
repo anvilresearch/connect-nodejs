@@ -163,12 +163,26 @@ Given an authorization code is provided as the `code` option, this method will e
 
 **options**
 
-* `code` – value obtained from a successful authorization request with `code` in the `response_types` requrest param
+ * `code` – value obtained from a successful authorization request with `code` in the `response_types` request param
 
 **example**
 
 ```javascript
 anvil.token({ code: 'AUTHORIZATION_CODE' })
+```
+
+#### anvil.refresh(options)
+
+Given an refresh_token is provided as the `refresh_token` option, this method will exchange the refresh_token for a set of token credentials, then verify the signatures. Depends on `client_id` and `client_secret` being configured, and prior calls to `anvil.discover()` and `anvil.getJWKs()`.
+
+**options**
+
+* `refresh_token` – value obtained from a successful authorization request with `token` in the `response_types` request param
+
+**example**
+
+```javascript
+anvil.refresh({ refresh_token: 'REFRESH_TOKEN' })
 ```
 
 #### anvil.userInfo(options)

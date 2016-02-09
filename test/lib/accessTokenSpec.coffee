@@ -101,6 +101,105 @@ describe 'Access Token', ->
       AccessToken.registeredClaims.scope.required.should.be.true
 
 
+  describe 'refresh', ->
+
+    {err,token} = {}
+
+    describe 'without refresh_token', ->
+
+      it 'should provide an error', ->
+        AccessToken.refresh null, {client_id:'fakeid', client_secret:'fakesecret'}, (err) ->
+          err.should.be.instanceof Error
+
+    describe 'without client_id', ->
+
+      it 'should provide an error', ->
+        AccessToken.refresh 'faketoken', {client_secret:'fakesecret'}, (err) ->
+          err.should.be.instanceof Error
+
+    describe 'without client_secret', ->
+
+      it 'should provide an error', ->
+        AccessToken.refresh 'faketoken', {client_id:'fakeid'}, (err) ->
+          err.should.be.instanceof Error
+
+    describe 'with all params and response ko', ->
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+        .post('/token', { refresh_token: 'faketoken', grant_type:'refresh_token'})
+        .basicAuth({
+          user: options.client_id
+          pass: options.client_secret
+        })
+        .reply(400, {
+          error: 'invalid_request'
+        })
+
+        AccessToken.refresh 'faketoken', options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after () ->
+        nock.cleanAll()
+
+      it 'should not provide an error', ->
+        expect(err).to.be.ok
+
+      it 'should provide a decoded token', ->
+        expect(token).not.to.be.ok
+
+    describe 'with all params and response ok', ->
+      tokens =
+        access_token: 'foo.bar.baz'
+        refresh_token: 'foo'
+
+      before (done) ->
+        issuer = 'https://connect.anvil.io'
+
+        options =
+          issuer: issuer
+          client_id: 'uuid2'
+          client_secret: 'secret'
+
+        headers =
+          reqHeaders:
+            'Content-Type': 'application/json'
+
+        nock(issuer, headers)
+        .post('/token', { refresh_token: 'faketoken', grant_type:'refresh_token'})
+        .basicAuth({
+          user: options.client_id
+          pass: options.client_secret
+        })
+        .reply(200, tokens)
+
+        AccessToken.refresh 'faketoken', options, (error, accesstoken) ->
+          err   = error
+          token = accesstoken
+          done()
+
+      after () ->
+        nock.cleanAll()
+
+      it 'should not provide an error', ->
+        expect(err).to.not.be.ok
+
+      it 'should provide a decoded token', ->
+        token.should.eql tokens
+
 
   describe 'verify', ->
 
