@@ -267,6 +267,7 @@ anvil.discover()
     console.log(uri)
 
     // handle an authorization response
+    // this verifies the signatures on tokens received from the authorization server
     return anvil.token({ code: 'AUTHORIZATION_CODE' })
   })
   .then(function (tokens) {
@@ -280,7 +281,7 @@ anvil.discover()
   .then(function (userInfo) {
     console.log(userInfo)
 
-    // verify an access token
+    // verify an access token received by an API service
     return anvil.verify(JWT, { scope: 'research' })
   })
 ```
