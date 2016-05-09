@@ -18,9 +18,11 @@ var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
 
 /**
- * Constructor
+ * OpenID Connect client (also an Anvil Connect server API client)
+ * @class AnvilConnect
+ * @param options {Object}
+ * @constructor
  */
-
 function AnvilConnect (options) {
   options = options || {}
 
@@ -96,11 +98,11 @@ function AnvilConnect (options) {
 AnvilConnect.UnauthorizedError = UnauthorizedError
 
 /**
- * Configure
- *
  * Requests OIDC configuration from the AnvilConnect instance's provider.
+ * Requires issuer to be set.
+ * @method discover
+ * @returns {Promise}
  */
-
 function discover () {
   var self = this
 
@@ -133,15 +135,14 @@ function discover () {
     })
   })
 }
-
 AnvilConnect.prototype.discover = discover
 
 /**
- * JWK set
- *
- * Requests JSON Web Key set from configured provider
+ * Requests JSON Web Key set from configured provider.
+ * Requires provider info to be initialized (like via `discover()`).
+ * @method getJWKs
+ * @returns {Promise}
  */
-
 function getJWKs () {
   var self = this
   var uri = this.configuration.jwks_uri
@@ -168,18 +169,71 @@ function getJWKs () {
     })
   })
 }
-
 AnvilConnect.prototype.getJWKs = getJWKs
 
 /**
- * Register client
+ * Initializes provider-related configurations for this client
+ * (loads OP endpoints via `discover()` and keys via `getJWKs()`).
+ * Requires the issuer to be already set. Usage:
  *
- * Right now this only works with dynamic registration. Anvil Connect server instances
- * that are configured with `token` or `scoped` for `client_registration` don't yet
- * work.
+ *   ```
+ *   var client = new AnvilConnect({ issuer: 'https://example.com' })
+ *   client.initProvider()
+ *     .then(function () {
+ *       // now the client is ready to register() or verify()
+ *     })
+ *     .catch(function (err) {
+ *       // handle error
+ *     })
+ *   ```
+ * @method initProvider
+ * @throws {Error} If `issuer` is not configured
+ * @return {Promise}
  */
+function initProvider() {
+  if (!this.issuer) {
+    throw new Error('initClient requires an issuer to be configured')
+  }
+  var self = this
+  return self.discover()
+    .then(function () {
+      return self.getJWKs()
+    })
+}
+AnvilConnect.prototype.initClient = initClient
 
-function register (registration) {
+/**
+ * Registers the client with an OIDC provider. Currently works with dynamic
+ * registration only (Anvil Connect server instances configured with
+ * `token` or `scoped` values for `client_registration` will not work).
+ * Requires that the OIDC provider's registration endpoint is loaded
+ * (say, via `initProvider()`)
+ *
+ * @method register
+ * @param options {Object} Options hashmap of registration params
+ * @param options.redirect_uris {Array<String>} Client callback URLs, for
+ *   redirecting users after authentication. Required.
+ * @param [options.client_name] {String} Name of the client app or service
+ * @param [options.client_uri] {String} Reference app URL (displayed to user)
+ * @param [options.logo_uri] {String} Client logo (displayed to user)
+ * @param [options.response_types] {Array<String>} List of allowed
+ *   response types. Allowed values are: either some combination of
+ *   `code`, `token` or `id_token`, OR `none` by itself.
+ *   Defaults to `['code']`
+ * @param [options.grant_types] {Array<String>} List
+ *   of allowed grant types. Defaults to `['authorization_code']`.
+ * @param [options.default_max_age] {Number} Token expiration, in seconds
+ * @param [options.post_logout_redirect_uris] {Array<String>}
+ * @param [options.trusted] {Boolean} Is the client part of your security
+ *   realm (is a privileged client), or is it a third party.
+ * @param [options.default_client_scope] {Array<String>} List of client
+ *   access token scopes issued by a client_credentials grant.
+ *   For example: ['profile', 'realm']
+ * @param [options.scopes] {Array<String>}
+ * @returns {Promise<Object>} Resolves to client configs/metadata
+ *   returned from the provider (also sets the relevant client attributes).
+ */
+function register (options) {
   var self = this
   var uri = this.configuration.registration_endpoint
   var token = this.tokens && this.tokens.access_token
@@ -191,7 +245,7 @@ function register (registration) {
       headers: {
         'Authorization': 'Bearer ' + token
       },
-      json: registration,
+      json: options,
       agentOptions: self.agentOptions
     })
     .then(function (data) {
@@ -205,7 +259,6 @@ function register (registration) {
     })
   })
 }
-
 AnvilConnect.prototype.register = register
 
 /**
@@ -406,13 +459,15 @@ function token (options) {
     })
   })
 }
-
 AnvilConnect.prototype.token = token
 
 /**
- * User Info
+ * Retrieves user info / profile from the OIDC Provider (requires a valid access
+ * token).
+ * @method userInfo
+ * @param options {Object} Options hashmap
+ * @returns {Promise<Object>} Resolves to userinfo hashmap object
  */
-
 function userInfo (options) {
   options = options || {}
 
@@ -441,13 +496,16 @@ function userInfo (options) {
     })
   })
 }
-
 AnvilConnect.prototype.userInfo = userInfo
 
 /**
- * Verify Access Token
+ * Verifies a given OIDC token
+ * @method verify
+ * @param token {String} JWT AccessToken for OpenID Connect (base64 encoded)
+ * @param options {Object} Options hashmap
+ * @throws {UnauthorizedError} HTTP 401 or 403 errors (invalid tokens etc)
+ * @returns {Promise}
  */
-
 function verify (token, options) {
   options = options || {}
   options.issuer = options.issuer || this.issuer
@@ -463,11 +521,9 @@ function verify (token, options) {
     })
   })
 }
-
 AnvilConnect.prototype.verify = verify
 
 /**
  * Exports
  */
-
 module.exports = AnvilConnect
