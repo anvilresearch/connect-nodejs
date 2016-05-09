@@ -190,7 +190,7 @@ AnvilConnect.prototype.getJWKs = getJWKs
  * @throws {Error} If `issuer` is not configured
  * @return {Promise}
  */
-function initProvider() {
+function initProvider () {
   if (!this.issuer) {
     throw new Error('initClient requires an issuer to be configured')
   }
@@ -200,7 +200,7 @@ function initProvider() {
       return self.getJWKs()
     })
 }
-AnvilConnect.prototype.initClient = initClient
+AnvilConnect.prototype.initProvider = initProvider
 
 /**
  * Registers the client with an OIDC provider. Currently works with dynamic
