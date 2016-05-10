@@ -16,6 +16,7 @@ var userRoles = require('./rest/userRoles')
 var IDToken = require('./lib/IDToken')
 var AccessToken = require('./lib/AccessToken')
 var UnauthorizedError = require('./errors/UnauthorizedError')
+var JWT = require('anvil-connect-jwt')
 
 /**
  * OpenID Connect client (also an Anvil Connect server API client)
@@ -136,6 +137,21 @@ function discover () {
   })
 }
 AnvilConnect.prototype.discover = discover
+
+/**
+ * Decodes an OIDC issuer (`.iss`) url from an access token and returns it.
+ * @param token {String} JWT Access Token (in encoded string form)
+ * @returns {String}
+ */
+function extractIssuer (token) {
+  if (!token) {
+    return
+  }
+  // Decode the JWT. Skip verification (since we need an issuer to verify)
+  var claims = JWT.decode(token, null, { noVerify: true })
+  return claims.payload.iss
+}
+AnvilConnect.prototype.extractIssuer = extractIssuer
 
 /**
  * Requests JSON Web Key set from configured provider.
@@ -466,35 +482,32 @@ AnvilConnect.prototype.token = token
  * token).
  * @method userInfo
  * @param options {Object} Options hashmap
- * @returns {Promise<Object>} Resolves to userinfo hashmap object
+ * @param options.token {String} Access token to exchange for userinfo. Required.
+ * @returns {Promise<Object>} Resolves to a userInfo hashmap object (or to an
+ *   Error when the access token is missing)
  */
 function userInfo (options) {
   options = options || {}
-
   var uri = this.configuration.userinfo_endpoint
-  var self = this
+  var agentOptions = this.agentOptions
 
-  return new Promise(function (resolve, reject) {
-    if (!options.token) {
-      return reject(new Error('Missing access token'))
-    }
-
-    request({
-      url: uri,
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer ' + options.token
-      },
-      json: true,
-      agentOptions: self.agentOptions
+  if (!options.token) {
+    return Promise.reject(new Error('Missing access token'))
+  }
+  // Access token is present
+  return Promise.resolve()
+    .then(function () {
+      // return a request promise
+      return request({
+        url: uri,
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer ' + options.token
+        },
+        json: true,
+        agentOptions: agentOptions
+      })
     })
-    .then(function (data) {
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
 }
 AnvilConnect.prototype.userInfo = userInfo
 
