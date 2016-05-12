@@ -1,5 +1,5 @@
- # Anvil Connect client for Nodejs
- [![NPM Version](https://img.shields.io/npm/v/connect-nodejs.svg?style=flat)](https://npm.im/connect-nodejs)
+# Anvil Connect client for Nodejs 
+[![NPM Version](https://img.shields.io/npm/v/anvil-connect-nodejs.svg?style=flat)](https://npm.im/anvil-connect-nodejs)
 [![Build Status](https://travis-ci.org/anvilresearch/connect-nodejs.svg?branch=master)](https://travis-ci.org/anvilresearch/connect-nodejs)
 
 [Anvil Connect][connect] is a modern authorization server built to authenticate 
