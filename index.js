@@ -388,37 +388,83 @@ function refresh (options) {
 AnvilConnect.prototype.refresh = refresh
 
 /**
- * Token
+ * Usage:
+ *
+ *   ```
+ *   client.token({
+ *     grant_type: 'client_credentials',
+ *     scope: 'realm'
+ *   })
+ *   .then(function (tokenResponse) {
+ *     var token = tokenResponse.access_token
+ *     return client.users.create({}, {token: token})
+ *   })
+ *   ```
+ *
+ * - if you pass in a code, use the code
+ * - if there's not a code, but a responseUri, parse the code out of it
+ *
+ * @method token
+ * @param [options] {Object} Options hashmap object
+ * @param [options.responseUri] {String} Redirect URL received from a request
+ *   (parsed to extract the authorization code)
+ * @param [options.code] {String}  Authorization code.
+ * @param [options.grant_type='authorization_code'] {String}
+ * @param [options.redirect_uri] {String} OIDC Redirect URL
+ *   (not needed for a grant_type == 'client_credentials')
+ * @param [options.scope] {String} Optional scope
+ * @param [options.refresh_token] {String} Token to be refreshed (used with
+ *   grant_type == 'refresh_token').
+ * @returns {Promise}
  */
-
 function token (options) {
   options = options || {}
 
   var self = this
   var uri = this.configuration.token_endpoint
   var code = options.code
+  var grantType = options.grant_type || 'authorization_code'
+  var scope = options.scope || self.scope
+  var redirectUri = options.redirect_uri || self.redirect_uri
+  var refreshToken = options.refresh_token
+  var formRequestData
 
-  // get the authorization code
-  if (!code && options.responseUri) {
-    var u = url.parse(options.responseUri)
-    code = qs.parse(u.query).code
+  if (grantType === 'client_credentials') {
+    // 'client_credentials' grants do not need a code or redirect uri
+    // Assumes this client is registered and has had the 'authority' role
+    // added to it previously
+    formRequestData = {
+      grant_type: grantType,
+      scope: scope
+    }
+  } else if (grantType === 'refresh_token') {
+    if (!refreshToken) {
+      return Promise.reject(
+        new Error('Refresh token grant types require refresh_token'))
+    }
+    formRequestData = {
+      grant_type: grantType,
+      refresh_token: refreshToken,
+      scope: scope
+    }
+  } else {
+    // For 'authorization_code' grant type, need to get the code
+    // if code is not passed in explicitly, try extract it from responseUri
+    if (!code && options.responseUri) {
+      var u = url.parse(options.responseUri)
+      code = qs.parse(u.query).code
+    }
+    if (!code) {
+      return Promise.reject(new Error('Missing authorization code'))
+    }
+    formRequestData = {
+      code: code,
+      grant_type: grantType,
+      redirect_uri: redirectUri
+    }
   }
 
   return new Promise(function (resolve, reject) {
-    if (!code) {
-      return reject(new Error('Missing authorization code'))
-    }
-
-    var formRequestData = {
-      code: code,
-      grant_type: options.grant_type || 'authorization_code',
-      redirect_uri: options.redirect_uri || self.redirect_uri
-    }
-
-    if (formRequestData.grant_type === 'client_credentials') {
-      formRequestData.scope = options.scope || self.scope
-    }
-
     request({
       url: uri,
       method: 'POST',
