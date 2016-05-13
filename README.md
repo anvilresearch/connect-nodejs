@@ -1,4 +1,4 @@
-# Anvil Connect client for Nodejs 
+# Anvil Connect client for Node.js 
 [![NPM Version](https://img.shields.io/npm/v/anvil-connect-nodejs.svg?style=flat)](https://npm.im/anvil-connect-nodejs)
 [![Build Status](https://travis-ci.org/anvilresearch/connect-nodejs.svg?branch=master)](https://travis-ci.org/anvilresearch/connect-nodejs)
 
@@ -6,8 +6,8 @@
 your users and protect your APIs. It's based on [OAuth 2.0][oauth2] and 
 [OpenID Connect][oidc]. 
 
-[This library][connect-nodejs] is a low level OpenID Connect and Anvil Connect 
-API client. Previous versions included Express-specific functions and 
+This library is a low level OpenID Connect and Anvil Connect API client. 
+Previous versions included Express-specific functions and 
 middleware. These higher-level functions are being split out into a 
 [separate library][connect-express].
 
@@ -17,8 +17,6 @@ middleware. These higher-level functions are being split out into a
 [connect-nodejs]: https://github.com/anvilresearch/connect-nodejs
 [connect-express]: https://github.com/anvilresearch/connect-express
 
-
-
 ### Install
 
 ```bash
@@ -26,6 +24,11 @@ $ npm install anvil-connect-nodejs --save
 ```
 
 ### Configure
+
+Before performing any other operations (such as verifying or refreshing OIDC
+tokens, or accessing the AnvilConnect-specific API (such as creating users),
+an OIDC client needs to be configured and registered with the server (OIDC
+Provider, OP for short).
 
 #### new AnvilConnect(config)
 

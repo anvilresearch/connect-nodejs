@@ -8,28 +8,17 @@ sinonChai   = require 'sinon-chai'
 expect      = chai.expect
 nock        = require 'nock'
 
-
-
-
 # Assertions
 chai.use sinonChai
 chai.should()
-
-
-
 
 AnvilConnect = require path.join(cwd, 'index')
 AccessToken = require path.join(cwd, 'lib', 'AccessToken')
 IDToken = require path.join(cwd, 'lib', 'IDToken')
 
-
-
-
 describe 'Anvil Connect Client', ->
 
-
   {anvil,promise,success,failure} = {}
-
 
   config =
     issuer: 'https://connect.anvil.io'
@@ -1083,9 +1072,7 @@ describe 'Anvil Connect Client', ->
 
         nock(anvil.issuer)
           .post('/token', {
-            code: 'random',
             grant_type: 'client_credentials',
-            redirect_uri: config.redirect_uri,
             scope: 'realm'
           })
           .basicAuth({
@@ -1105,7 +1092,6 @@ describe 'Anvil Connect Client', ->
         failure = sinon.spy ->
           done()
         promise = anvil.token({
-          code: 'random',
           grant_type: 'client_credentials',
           scope: 'realm'
         }).then(success)
