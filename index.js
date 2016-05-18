@@ -19,9 +19,10 @@ var UnauthorizedError = require('./errors/UnauthorizedError')
 var JWT = require('anvil-connect-jwt')
 
 /**
- * OpenID Connect client (also an Anvil Connect server API client)
+ * OpenID Connect client (also an Anvil Connect server API client).
  * @class AnvilConnect
- * @param options {Object}
+ * @param [options={}] {Object} Options hashmap object
+ * @param [options.issuer] {String} URL of the OIDC Provider
  * @constructor
  */
 function AnvilConnect (options) {
@@ -95,7 +96,6 @@ function AnvilConnect (options) {
 /**
  * Errors
  */
-
 AnvilConnect.UnauthorizedError = UnauthorizedError
 
 /**
@@ -152,6 +152,41 @@ function extractIssuer (token) {
   return claims.payload.iss
 }
 AnvilConnect.prototype.extractIssuer = extractIssuer
+
+/**
+ * Fetches and returns a Client Credentials Grant access token from the OP's
+ * /token endpoint. Convenience method (wrapper for client.token()).
+ * Used as one of the methods to get the token that's required for most
+ * AnvilConnect API client operations (such as creating Users, Clients, etc).
+ * Requires that the client:
+ *   - Has been pre-registered with the AnvilConnect server
+ *   - Had an 'authority' role assigned to it via `nvl client:assign`
+ *   - Has been initialized via client.initProvider()
+ * Usage:
+ *
+ *   ```
+ *   client.getClientAccessToken()
+ *     .then(function (accessToken) {
+ *       // you can now use the AnvilConnect API calls, and pass the token
+ *       // in the `options` parameter. For example:
+ *       var options = { token: accessToken }
+ *       return client.users.create(userData, options)
+ *     })
+ *   ```
+ * @method getClientAccessToken
+ * @returns {Promise<Request>}
+ */
+function getClientAccessToken () {
+  return this
+    .token({
+      grant_type: 'client_credentials',
+      scope: 'realm'
+    })
+    .then(function (tokenResponse) {
+      return tokenResponse.access_token
+    })
+}
+AnvilConnect.prototype.getClientAccessToken = getClientAccessToken
 
 /**
  * Requests JSON Web Key set from configured provider.
@@ -303,7 +338,6 @@ function authorizationUri (options) {
 
   return url.format(u)
 }
-
 AnvilConnect.prototype.authorizationUri = authorizationUri
 
 /**
@@ -354,7 +388,6 @@ AnvilConnect.prototype.authorizationParams = authorizationParams
 /**
  * Refresh
  */
-
 function refresh (options) {
   options = options || {}
 
@@ -384,7 +417,6 @@ function refresh (options) {
     })
   })
 }
-
 AnvilConnect.prototype.refresh = refresh
 
 /**
@@ -561,7 +593,12 @@ AnvilConnect.prototype.userInfo = userInfo
  * Verifies a given OIDC token
  * @method verify
  * @param token {String} JWT AccessToken for OpenID Connect (base64 encoded)
- * @param options {Object} Options hashmap
+ * @param [options={}] {Object} Options hashmap
+ * @param [options.issuer] {String}
+ * @param [options.key]
+ * @param [options.client_id] {String}
+ * @param [options.client_secret {String}
+ * @param [options.scope]
  * @throws {UnauthorizedError} HTTP 401 or 403 errors (invalid tokens etc)
  * @returns {Promise}
  */

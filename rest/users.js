@@ -1,37 +1,87 @@
 /**
- * Module dependencies
+ * Provides an interface for the Anvil Connect Users CRUD API.
+ * Note: All user operations require an access token passed in `options.token`.
+ * You can get this token either via an admin user (with an `authority` role
+ * assigned to them) login, OR via a Client Credentials Grant request
+ * (see `client.getClientAccessToken()` docs in `../index.js`).
+ * Example Usage:
+ *
+ *   ```
+ *   client.getClientAccessToken()
+ *     .then(function (accessToken) {
+ *       var options = { token: accessToken }
+ *       // Once you have the access token you can
+ *       //   call client.users.update(), create(), delete(), etc
+ *       return client.users.create(userData, options)
+ *     })
+ *   ```
+ * @module users
  */
 
+/**
+ * Module dependencies
+ */
 var request = require('../lib/request')
 
 /**
- * List Users
+ * Retrieves a list of user accounts via a REST request to the AnvilConnect
+ * server's `/users` API.
+ * @method listUsers
+ * @param options {Object} Options hashmap object
+ * @param options.token {String} (Required) Access token. Gets sent as an
+ *   Authorization: Bearer <token> header.
+ * @param [options.headers={}] {Object} Optional hashmap of additional headers
+ * @return {Promise<Request>}
  */
-
 function listUsers (options) {
   options = options || {}
   options.url = '/v1/users'
   return request.bind(this)(options)
 }
-
 exports.list = listUsers
 
 /**
- * Get User
+ * Retrieves a user's account details via a REST request to the AnvilConnect
+ * server's `/users` API.
+ * @method getUser
+ * @param id {String} User ID (`sub` in the ID Token)
+ * @param options {Object} Options hashmap object
+ * @param options.token {String} (Required) Access token. Gets sent as an
+ *   Authorization: Bearer <token> header.
+ * @param [options.headers={}] {Object} Optional hashmap of additional headers
+ * @return {Promise<Request>}
  */
-
 function getUser (id, options) {
   options = options || {}
   options.url = '/v1/users/' + id
   return request.bind(this)(options)
 }
-
 exports.get = getUser
 
 /**
- * Create User
+ * Creates a user via a REST request to the AnvilConnect server's /users API.
+ * Usage:
+ *
+ *   ```
+ *   var userData = {
+ *     email: 'alice@example.com',
+ *     name: 'Alice',
+ *     password: 'swordfish'
+ *   }
+ *   client.getClientAccessToken()
+ *     .then(function (accessToken) {
+ *       var options = { token: accessToken }
+ *       return client.users.create(userData, options)
+ *     })
+ *   ```
+ * @method createUser
+ * @param data {Object} User details object
+ * @param options {Object} Options hashmap object
+ * @param options.token {String} (Required) Access token. Gets sent as an
+ *   Authorization: Bearer <token> header.
+ * @param [options.headers={}] {Object} Optional hashmap of additional headers
+ * @return {Promise<Request>}
  */
-
 function createUser (data, options) {
   options = options || {}
   options.url = '/v1/users'
@@ -39,13 +89,21 @@ function createUser (data, options) {
   options.json = data
   return request.bind(this)(options)
 }
-
 exports.create = createUser
 
 /**
- * Update User
+ * Updates a user via a REST request to the AnvilConnect server's /users API.
+ * Note: You cannot update a user's password using this call (the field gets
+ * ignored by the /users endpoint).
+ * @method updateUser
+ * @param id {String} User ID (`sub` in the ID Token)
+ * @param data {Object} User details object
+ * @param options {Object} Options hashmap object
+ * @param options.token {String} (Required) Access token. Gets sent as an
+ *   Authorization: Bearer <token> header.
+ * @param [options.headers={}] {Object} Optional hashmap of additional headers
+ * @return {Promise<Request>}
  */
-
 function updateUser (id, data, options) {
   options = options || {}
   options.url = '/v1/users/' + id
@@ -53,13 +111,18 @@ function updateUser (id, data, options) {
   options.json = data
   return request.bind(this)(options)
 }
-
 exports.update = updateUser
 
 /**
- * Delete User
+ * Deletes a user via a REST request to the AnvilConnect server's /users API.
+ * @method deleteUser
+ * @param id {String} User ID (`sub` in the ID Token).
+ * @param options {Object} Options hashmap object
+ * @param options.token {String} (Required) Access token. Gets sent as an
+ *   Authorization: Bearer <token> header.
+ * @param [options.headers={}] {Object} Optional hashmap of additional headers
+ * @return {Promise<Request>}
  */
-
 function deleteUser (id, options) {
   options = options || {}
   options.url = '/v1/users/' + id
@@ -67,5 +130,4 @@ function deleteUser (id, options) {
   delete options.json
   return request.bind(this)(options)
 }
-
 exports.delete = deleteUser
