@@ -22,7 +22,19 @@ var JWT = require('anvil-connect-jwt')
  * OpenID Connect client (also an Anvil Connect server API client).
  * @class AnvilConnect
  * @param [options={}] {Object} Options hashmap object
- * @param [options.issuer] {String} URL of the OIDC Provider
+ * @param [options.agentOptions={}] {Object} Optional, passed to `request`
+ *   library (see npm's `request` or `request-promise` for documentation)
+ * @param [options.issuer] {String} URL of the OIDC Provider. Required for
+ *   most operations.
+ * @param [options.scope] {Array|String} Either an array or a space-separated
+ *   string list of scopes. Defaults to ['openid', 'profile']
+ * @param [options.client_id] {String} Client ID (obtained after registering
+ *   the client with the OP, either via `nvl client:register` cli tool, or
+ *   via Dynamic Registration (`client.register()`).
+ * @param [options.client_secret] {String} Client Secret (obtained after
+ *   registering the client with the OP, either via `nvl client:register` cli
+ *   tool, or via Dynamic Registration (`client.register()`).
+ * @param [options.redirect_uri] {String} Optional client redirect endpoint
  * @constructor
  */
 function AnvilConnect (options) {
@@ -315,7 +327,6 @@ AnvilConnect.prototype.register = register
 /**
  * Authorization URI
  */
-
 function authorizationUri (options) {
   var u = url.parse(this.configuration.authorization_endpoint)
 
@@ -343,7 +354,6 @@ AnvilConnect.prototype.authorizationUri = authorizationUri
 /**
  * Authorization Params
  */
-
 function authorizationParams (options) {
   // ensure options is defined
   options = options || {}
@@ -420,21 +430,19 @@ function refresh (options) {
 AnvilConnect.prototype.refresh = refresh
 
 /**
- * Usage:
+ * Provides a low-level interface to the server's `/token` REST endpoint.
+ * Using this method requires that the client has been already registered with
+ * the provider, and initialized via `initProvider()`.
+ * Useful for:
  *
- *   ```
- *   client.token({
- *     grant_type: 'client_credentials',
- *     scope: 'realm'
- *   })
- *   .then(function (tokenResponse) {
- *     var token = tokenResponse.access_token
- *     return client.users.create({}, {token: token})
- *   })
- *   ```
- *
- * - if you pass in a code, use the code
- * - if there's not a code, but a responseUri, parse the code out of it
+ *   1. Sending an `authorization_code` grant type request (to exchange
+ *     an access code for an ID token in the Auth OIDC flow). Requires either
+ *     `options.code` to be set, or `options.responseUri`.
+ *   2. Making a `client_credentials` grant type request (though use
+ *     the `client.getClientAccessToken()` convenience method, instead).
+ *     Requires that the client was assigned an `authority` role, after
+ *     after registration.
+ *   3. Refreshing an expired token (requires `options.refresh_token` to be set)
  *
  * @method token
  * @param [options] {Object} Options hashmap object
@@ -520,7 +528,6 @@ function token (options) {
           })
         }
       }
-
       // when requesting a token using client credentials no ID information is
       // returned
       if (formRequestData.grant_type !== 'client_credentials') {
@@ -535,7 +542,6 @@ function token (options) {
           })
         }
       }
-
       // verify tokens
       async.parallel(verifyClaims, function (err, result) {
         if (err) {
