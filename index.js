@@ -402,12 +402,12 @@ function refresh (options) {
   options = options || {}
 
   var self = this
-  var refresh_token = options.refresh_token
+  var refreshToken = options.refresh_token
   return new Promise(function (resolve, reject) {
-    if (!refresh_token) {
+    if (!refreshToken) {
       return reject(new Error('Missing refresh_token'))
     }
-    AccessToken.refresh(refresh_token, {
+    AccessToken.refresh(refreshToken, {
       issuer: self.issuer,
       client_id: self.client_id,
       client_secret: self.client_secret

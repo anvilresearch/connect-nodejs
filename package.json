@@ -16,7 +16,7 @@
   ],
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register -R spec && eslint --ignore-path .gitignore . && echo Code looks good!",
+    "test": "mocha test && mocha --compilers coffee:coffee-script/register -R spec && standard && echo Code looks good!",
     "test-watch": "mocha --compilers coffee:coffee-script/register -R spec --watch",
     "lint": "eslint --ignore-path .gitignore . && echo Code looks good!"
   },
@@ -57,8 +57,16 @@
     "pem-jwk": "^1.5.1",
     "sinon": "^1.15.4",
     "sinon-chai": "^2.8.0",
-    "eslint": "^1.3.1",
-    "eslint-config-standard": "^4.3.2",
-    "eslint-plugin-standard": "^1.3.0"
+    "standard": "^7.1.0"
+  },
+  "standard": {
+    "globals": [
+      "after",
+      "afterEach",
+      "before",
+      "beforeEach",
+      "describe",
+      "it"
+    ]
   }
 }
