@@ -35,6 +35,12 @@ var JWT = require('anvil-connect-jwt')
  *   registering the client with the OP, either via `nvl client:register` cli
  *   tool, or via Dynamic Registration (`client.register()`).
  * @param [options.redirect_uri] {String} Optional client redirect endpoint
+ * @param [options.configuration] {Object} Provider API endpoints, etc (usually
+ *   loaded via `initProvider()`, unless you explicitly pass them in here)
+ * @param [options.jwks] {Object} Issuer public keys (usually loaded via
+ *   `initProvider()`, unless you explicitly pass them to the constructor)
+ * @param [options.registration] {Object} Client dynamic registration details
+ *   (usually loaded via `register()`, unless explicitly passed in here)
  * @constructor
  */
 function AnvilConnect (options) {
@@ -45,6 +51,10 @@ function AnvilConnect (options) {
   this.client_id = options.client_id
   this.client_secret = options.client_secret
   this.redirect_uri = options.redirect_uri
+  this.scope = options.scope
+  this.configuration = options.configuration
+  this.jwks = options.jwks
+  this.registration = options.registration
   this.agentOptions = options.agentOptions
 
   this.clients = {
