@@ -114,7 +114,7 @@ AnvilConnect.UnauthorizedError = UnauthorizedError
  * Requests OIDC configuration from the AnvilConnect instance's provider.
  * Requires issuer to be set.
  * @method discover
- * @returns {Promise}
+ * @return {Promise}
  */
 function discover () {
   var self = this
@@ -153,7 +153,7 @@ AnvilConnect.prototype.discover = discover
 /**
  * Decodes an OIDC issuer (`.iss`) url from an access token and returns it.
  * @param token {String} JWT Access Token (in encoded string form)
- * @returns {String}
+ * @return {String}
  */
 function extractIssuer (token) {
   if (!token) {
@@ -186,7 +186,7 @@ AnvilConnect.prototype.extractIssuer = extractIssuer
  *     })
  *   ```
  * @method getClientAccessToken
- * @returns {Promise<Request>}
+ * @return {Promise<Request>}
  */
 function getClientAccessToken () {
   return this
@@ -204,7 +204,7 @@ AnvilConnect.prototype.getClientAccessToken = getClientAccessToken
  * Requests JSON Web Key set from configured provider.
  * Requires provider info to be initialized (like via `discover()`).
  * @method getJWKs
- * @returns {Promise}
+ * @return {Promise}
  */
 function getJWKs () {
   var self = this
@@ -266,16 +266,14 @@ function initProvider () {
 AnvilConnect.prototype.initProvider = initProvider
 
 /**
- * Registers the client with an OIDC provider. Currently works with dynamic
- * registration only (Anvil Connect server instances configured with
- * `token` or `scoped` values for `client_registration` will not work).
+ * Registers the client with an OIDC provider.
  * Requires that the OIDC provider's registration endpoint is loaded
  * (say, via `initProvider()`)
  *
  * @method register
  * @param options {Object} Options hashmap of registration params
  * @param options.redirect_uris {Array<String>} Client callback URLs, for
- *   redirecting users after authentication. Required.
+ *   redirecting users after authentication. REQUIRED.
  * @param [options.client_name] {String} Name of the client app or service
  * @param [options.client_uri] {String} Reference app URL (displayed to user)
  * @param [options.logo_uri] {String} Client logo (displayed to user)
@@ -292,35 +290,40 @@ AnvilConnect.prototype.initProvider = initProvider
  * @param [options.default_client_scope] {Array<String>} List of client
  *   access token scopes issued by a client_credentials grant.
  *   For example: ['profile', 'realm']
- * @param [options.scopes] {Array<String>}
- * @returns {Promise<Object>} Resolves to client configs/metadata
+ * @param [options.token] {String} Access token (for scoped (non-dynamic) client
+ *   registartion).
+ * @throws {Error} If `redirect_uris` are missing.
+ * @return {Promise<Object>} Resolves to client configs/metadata
  *   returned from the provider (also sets the relevant client attributes).
  */
 function register (options) {
   var self = this
-  var uri = this.configuration.registration_endpoint
-  var token = this.tokens && this.tokens.access_token
-
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token
-      },
-      json: options,
-      agentOptions: self.agentOptions
+  var url = this.configuration.registration_endpoint
+  var token = options.token
+  if (!options.redirect_uris) {
+    throw new Error('Missing required redirect_uris parameter for registration')
+  }
+  var requestOptions = {
+    url: url,
+    method: 'POST',
+    json: options,
+    agentOptions: self.agentOptions
+  }
+  if (token) {
+    requestOptions.headers = {
+      'Authorization': 'Bearer ' + token
+    }
+  }
+  return Promise.resolve()
+    .then(function () {
+      return request(requestOptions)
     })
     .then(function (data) {
       self.client_id = data.client_id
       self.client_secret = data.client_secret
       self.registration = data
-      resolve(data)
+      return data
     })
-    .catch(function (err) {
-      reject(err)
-    })
-  })
 }
 AnvilConnect.prototype.register = register
 
@@ -455,7 +458,7 @@ AnvilConnect.prototype.refresh = refresh
  * @param [options.scope] {String} Optional scope
  * @param [options.refresh_token] {String} Token to be refreshed (used with
  *   grant_type == 'refresh_token').
- * @returns {Promise}
+ * @return {Promise}
  */
 function token (options) {
   options = options || {}
@@ -567,7 +570,7 @@ AnvilConnect.prototype.token = token
  * @method userInfo
  * @param options {Object} Options hashmap
  * @param options.token {String} Access token to exchange for userinfo. Required.
- * @returns {Promise<Object>} Resolves to a userInfo hashmap object (or to an
+ * @return {Promise<Object>} Resolves to a userInfo hashmap object (or to an
  *   Error when the access token is missing)
  */
 function userInfo (options) {
@@ -606,7 +609,7 @@ AnvilConnect.prototype.userInfo = userInfo
  * @param [options.client_secret {String}
  * @param [options.scope]
  * @throws {UnauthorizedError} HTTP 401 or 403 errors (invalid tokens etc)
- * @returns {Promise}
+ * @return {Promise}
  */
 function verify (token, options) {
   options = options || {}
