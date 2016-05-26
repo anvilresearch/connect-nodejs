@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/anvilresearch/connect-nodejs",
   "dependencies": {
-    "anvil-connect-jwt": "^0.1.7",
+    "anvil-connect-jwt": "^0.1.8",
     "async": "^1.3.0",
     "base64url": "^1.0.4",
     "jwa": "^1.0.1",

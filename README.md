@@ -132,7 +132,7 @@ prior call to `client.discover()`.
 **example**
 
 ```javascript
-client.register({
+var options = {
   client_name: 'Antisocial Network',
   client_uri: 'https://app.example.com',
   logo_uri: 'https://app.example.com/assets/logo.png',
@@ -141,7 +141,13 @@ client.register({
   default_max_age: 86400, // one day in seconds
   redirect_uris: ['https://app.example.com/callback.html', 'https://app.example.com/other.html'],
   post_logout_redirect_uris: ['https://app.example.com']
-})
+}
+client.register(options)
+  .then(function (data) {
+    // After the register request resolves
+    // client.client_id and .client_secret are initialized
+    // and the rest of the returned data is set to client.registration
+  })
 ```
 
 #### client.authorizationUri([endpoint|options])
@@ -178,6 +184,11 @@ client.authorizationUri({
 
 Accepts an options object and returns an object containing authorization params
 including default values. Depends on `client_id` being configured.
+
+*Note:* This is a low-level function used by `authorizationUri()`,
+documented to list its parameters (which are passed through to
+`authorizationParams()`). It's unlikely that your code will be invoking it
+directly.
 
 **options**
 
