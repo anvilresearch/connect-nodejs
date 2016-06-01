@@ -482,11 +482,13 @@ AnvilConnect.prototype.refresh = refresh
  * Usage:
  *
  *   ```
- *   var serializedClient = client.serialize()  // string json representation
+ *   var serializedClient = client.serialize()
  *   // To deserialize later on:
  *   var clientConfig = JSON.parse(serializedClient)
  *   var restoredClient = new AnvilConnect(clientConfig)
  *   ```
+ * @method serialize
+ * @return {String} JSON representation of the full client config
  */
 function serialize () {
   return JSON.stringify(this)

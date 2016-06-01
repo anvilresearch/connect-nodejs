@@ -261,7 +261,27 @@ client.userInfo({ token: 'ACCESS_TOKEN' })
 
 #### client.verify(token, options)
 
-### Anvil Connect API
+### Anvil Connect Admin API
+
+Anvil Connect provides a backend admin-only API (outside of the OIDC specs),
+for managing clients, users and so on.
+
+Note: All of these operations require an access token passed in `options.token`.
+You can get this token either via an admin user (with an `authority` role
+assigned to them) login, OR via a Client Credentials Grant request
+(see `client.getClientAccessToken()` docs in `../index.js`).
+Example Usage:
+
+ 
+```
+client.getClientAccessToken()
+  .then(function (accessToken) {
+    var options = { token: accessToken }
+    // Once you have the access token you can
+    //   call client.users.update(), create(), delete(), etc
+    return client.users.create(userData, options)
+  })
+```
 
 #### Clients
 
