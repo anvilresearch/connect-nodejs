@@ -371,7 +371,30 @@ function register (options) {
 AnvilConnect.prototype.register = register
 
 /**
- * Authorization URI
+ * Returns the client's pre-registered post-logout redirect URIs if it
+ * registered any, or an empty array otherwise. For use with `signout()`.
+ * @method registeredPostLogoutUris
+ * @return {Array} List of pre-registered post-logout redirect URIs, if any
+ */
+function registeredPostLogoutUris () {
+  var uris
+  if (!this.registration) {
+    return []
+  }
+  uris = this.registration.post_logout_redirect_uris || []
+  return uris
+}
+AnvilConnect.prototype.registeredPostLogoutUris = registeredPostLogoutUris
+
+/**
+ * Returns the url for an OIDC authorization call, for a given set of options.
+ * @method authorizationUri
+ * @param [options={}] {String|Object} Either a string representing an endpoint
+ *   (such as 'authorize'), or an options hashmap.
+ *   For a full list of options, see the docstring of `authorizationParams()`.
+ * @param [options.endpoint='authorize'] Endpoint for which you're building the
+ *   uri.
+ * @return {String} Authorization uri
  */
 function authorizationUri (options) {
   var u = url.parse(this.configuration.authorization_endpoint)
@@ -398,7 +421,29 @@ function authorizationUri (options) {
 AnvilConnect.prototype.authorizationUri = authorizationUri
 
 /**
- * Authorization Params
+ * Composes and returns a hashmap of parameters used for any sort of OIDC
+ * request, both the required ones (like the client_id, scope, etc) and the
+ * optional ones. Mainly used by `authorizationUri()`.
+ * @method authorizationParams
+ * @private
+ * @param [options={}]
+ * @param [options.acr_values]
+ * @param [options.display]
+ * @param [options.email]
+ * @param [options.id_token_hint]
+ * @param [options.login_hint]
+ * @param [options.max_age]
+ * @param [options.nonce]
+ * @param [options.password]
+ * @param [options.post_logout_redirect_uri] {String} For `signout()` requests
+ * @param [options.prompt]
+ * @param [options.provider]
+ * @param [options.redirect_uri]
+ * @param [options.response_type='code']
+ * @param [options.scope]
+ * @param [options.state]
+ * @param [options.ui_locales]
+ * @return {Object} Hashmap of OIDC request parameters
  */
 function authorizationParams (options) {
   // ensure options is defined
@@ -426,6 +471,7 @@ function authorizationParams (options) {
     'ui_locales',
     'id_token_hint',
     'login_hint',
+    'post_logout_redirect_uri',
     'acr_values'
   ]
 
@@ -438,21 +484,25 @@ function authorizationParams (options) {
 
   return params
 }
-
 AnvilConnect.prototype.authorizationParams = authorizationParams
 
 /**
- * Refresh
+ * Sends an OIDC refresh token request, verifies the result, and resolves to
+ * the new (refreshed) token.
+ * @method refresh
+ * @param options {Object} Options hashmap
+ * @param options.refresh_token {AccessToken} Token to be refreshed (required)
+ * @return {Promise<AccessToken>}
  */
 function refresh (options) {
   options = options || {}
 
   var self = this
   var refreshToken = options.refresh_token
+  if (!refreshToken) {
+    return Promise.reject(new Error('Missing refresh_token'))
+  }
   return new Promise(function (resolve, reject) {
-    if (!refreshToken) {
-      return reject(new Error('Missing refresh_token'))
-    }
     AccessToken.refresh(refreshToken, {
       issuer: self.issuer,
       client_id: self.client_id,
@@ -496,6 +546,48 @@ function serialize () {
 AnvilConnect.prototype.serialize = serialize
 
 /**
+ * Sends a request to the provider's `/signout` endpoint, to end a user's
+ *   session.
+ * @method signout
+ * @param idToken {String} ID Token of the user to sign out. Required.
+ *   Used as `id_token_hint` by the OIDC provider
+ * @param [postLogoutRedirectUri] {String} Must be one of the post-logout uris
+ *   pre-registered by the client.
+ * @return {Promise<Request>}
+ */
+function signout (idToken, postLogoutRedirectUri) {
+  if (!idToken) {
+    return Promise.reject(new Error('ID Token required for signout'))
+  }
+  var options = {}
+  options.endpoint = 'signout'
+  options.id_token_hint = idToken
+  if (postLogoutRedirectUri) {
+    options.post_logout_redirect_uri = postLogoutRedirectUri
+  } else {
+    var registeredUris = this.registeredPostLogoutUris()
+    if (registeredUris.length === 0) {
+      return Promise.reject(
+        new Error('A post_logout_redirect_uri parameter is required for signout'))
+    }
+    // If no post-logout uri option provided explicitly, just pick the first one
+    options.post_logout_redirect_uri = registeredUris[0]
+  }
+  var uri = this.authorizationUri(options)
+  var self = this
+  return Promise.resolve()
+    .then(function () {
+      return request({
+        url: uri,
+        method: 'GET',
+        json: true,
+        agentOptions: self.agentOptions
+      })
+    })
+}
+AnvilConnect.prototype.signout = signout
+
+/**
  * Provides a low-level interface to the server's `/token` REST endpoint.
  * Using this method requires that the client has been already registered with
  * the provider, and initialized via `initProvider()`.
@@ -509,7 +601,7 @@ AnvilConnect.prototype.serialize = serialize
  *     Requires that the client was assigned an `authority` role, after
  *     after registration.
  *   3. Refreshing an expired token (requires `options.refresh_token` to be set)
- *
+ *     Use `client.refresh()` convenience method instead.
  * @method token
  * @param [options] {Object} Options hashmap object
  * @param [options.responseUri] {String} Redirect URL received from a request
@@ -666,11 +758,11 @@ AnvilConnect.prototype.userInfo = userInfo
  * @method verify
  * @param token {String} JWT AccessToken for OpenID Connect (base64 encoded)
  * @param [options={}] {Object} Options hashmap
- * @param [options.issuer] {String}
- * @param [options.key]
+ * @param [options.issuer] {String} OIDC Provider/Issuer URL
+ * @param [options.key] {Object} Issuer's public key for signatures (jwks.sig)
  * @param [options.client_id] {String}
  * @param [options.client_secret {String}
- * @param [options.scope]
+ * @param [options.scope] {String}
  * @throws {UnauthorizedError} HTTP 401 or 403 errors (invalid tokens etc)
  * @return {Promise}
  */
