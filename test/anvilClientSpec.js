@@ -116,18 +116,32 @@
       it('should set default scope', function () {
         return anvil.scope.should.equal('openid profile')
       })
+      it('should not duplicate scope', function () {
+        anvil = new AnvilConnect({
+          scope: 'openid profile'
+        })
+        return anvil.scope.should.equal('openid profile')
+      })
       it('should set scope from an array', function () {
         anvil = new AnvilConnect({
           scope: ['realm']
         })
         return anvil.scope.should.contain('realm')
       })
-      return it('should set scope from a string', function () {
+      it('should set scope from a string', function () {
         anvil = new AnvilConnect({
           scope: 'realm extra'
         })
         anvil.scope.should.contain('realm')
         return anvil.scope.should.contain('extra')
+      })
+    })
+    describe('addScope', function () {
+      it('should add scope with no duplication', function () {
+        var client = new AnvilConnect()
+        client.addScope(['openid', 'profile'])
+        client.addScope(['openid', 'profile'])
+        client.scope.should.equal('openid profile')
       })
     })
     describe('discover', function () {
@@ -443,6 +457,23 @@
         })
         return expect(params.unknown).to.be.undefined
       })
+    })
+    describe('serialize', function () {
+      it('should treat serialized-then-deserialized clients as equivalent',
+        function () {
+          var client = new AnvilConnect({
+            issuer: 'https://oidc.example.com',
+            client_id: 'uuid',
+            client_secret: 'secret',
+            redirect_uri: 'https://app.example.com/callback'
+          })
+          var serializedClient = client.serialize()
+          expect(serializedClient).to.be.a('string')
+          // Now deserialize and compare to the original client
+          var clientOptions = JSON.parse(serializedClient)
+          var newClient = new AnvilConnect(clientOptions)
+          JSON.stringify(newClient).should.equal(JSON.stringify(client))
+        })
     })
     describe('refresh', function () {
       describe('with missing options argument', function () {

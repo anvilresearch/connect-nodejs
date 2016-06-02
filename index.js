@@ -1,3 +1,4 @@
+'use strict'
 /**
  * Module dependencies
  */
@@ -27,7 +28,7 @@ var JWT = require('anvil-connect-jwt')
  * @param [options.issuer] {String} URL of the OIDC Provider. Required for
  *   most operations.
  * @param [options.scope] {Array|String} Either an array or a space-separated
- *   string list of scopes. Defaults to ['openid', 'profile']
+ *   string list of scopes. Defaults to `'openid profile'`
  * @param [options.client_id] {String} Client ID (obtained after registering
  *   the client with the OP, either via `nvl client:register` cli tool, or
  *   via Dynamic Registration (`client.register()`).
@@ -35,6 +36,12 @@ var JWT = require('anvil-connect-jwt')
  *   registering the client with the OP, either via `nvl client:register` cli
  *   tool, or via Dynamic Registration (`client.register()`).
  * @param [options.redirect_uri] {String} Optional client redirect endpoint
+ * @param [options.configuration] {Object} Provider API endpoints, etc (usually
+ *   loaded via `initProvider()`, unless you explicitly pass them in here)
+ * @param [options.jwks] {Object} Issuer public keys (usually loaded via
+ *   `initProvider()`, unless you explicitly pass them to the constructor)
+ * @param [options.registration] {Object} Client dynamic registration details
+ *   (usually loaded via `register()`, unless explicitly passed in here)
  * @constructor
  */
 function AnvilConnect (options) {
@@ -45,65 +52,46 @@ function AnvilConnect (options) {
   this.client_id = options.client_id
   this.client_secret = options.client_secret
   this.redirect_uri = options.redirect_uri
+  this.configuration = options.configuration
+  this.jwks = options.jwks
+  this.registration = options.registration
   this.agentOptions = options.agentOptions
 
-  this.clients = {
-    list: clients.list.bind(this),
-    get: clients.get.bind(this),
-    create: clients.create.bind(this),
-    update: clients.update.bind(this),
-    delete: clients.delete.bind(this),
-    roles: {
-      list: clientRoles.listRoles.bind(this),
-      add: clientRoles.addRole.bind(this),
-      delete: clientRoles.deleteRole.bind(this)
-    }
-  }
+  this.scope = 'openid profile'  // Init to default
+  this.addScope(options.scope)   // Set Union any additional scopes passed in
 
-  this.roles = {
-    list: roles.list.bind(this),
-    get: roles.get.bind(this),
-    create: roles.create.bind(this),
-    update: roles.update.bind(this),
-    delete: roles.delete.bind(this),
-    scopes: {
-      list: roleScopes.listScopes.bind(this),
-      add: roleScopes.addScope.bind(this),
-      delete: roleScopes.deleteScope.bind(this)
-    }
-  }
-
-  this.scopes = {
-    list: scopes.list.bind(this),
-    get: scopes.get.bind(this),
-    create: scopes.create.bind(this),
-    update: scopes.update.bind(this),
-    delete: scopes.delete.bind(this)
-  }
-
-  this.users = {
-    list: users.list.bind(this),
-    get: users.get.bind(this),
-    create: users.create.bind(this),
-    update: users.update.bind(this),
-    delete: users.delete.bind(this),
-    roles: {
-      list: userRoles.listRoles.bind(this),
-      add: userRoles.addRole.bind(this),
-      delete: userRoles.deleteRole.bind(this)
-    }
-  }
-
-  // add scope to defaults
-  var defaultScope = ['openid', 'profile']
-  if (typeof options.scope === 'string') {
-    this.scope = defaultScope.concat(options.scope.split(' ')).join(' ')
-  } else if (Array.isArray(options.scope)) {
-    this.scope = defaultScope.concat(options.scope).join(' ')
-  } else {
-    this.scope = defaultScope.join(' ')
-  }
+  // initialize the Anvil Connect admin API
+  this.initAdminAPI()
 }
+
+/**
+ * Adds the passed in list of scopes to the current one via a Set union
+ * operation.
+ * @param scope {Array|String} Either an array or a space-separated
+ *   string list of scopes.
+ * @method addScope
+ */
+function addScope (scope) {
+  if (!scope) {
+    return
+  }
+  var oldScope = new Set(this.scope.split(' '))
+  var newScope
+  // Convert the incoming new scopes to a Set
+  if (typeof scope === 'string') {
+    newScope = new Set(scope.split(' '))
+  } else if (Array.isArray(scope)) {
+    newScope = new Set(scope)
+  } else {
+    throw new RangeError('Trying to add an invalid scope object')
+  }
+  oldScope.forEach(function (item) {
+    newScope.add(item)
+  })
+  // Convert back to string
+  this.scope = Array.from(newScope).join(' ')
+}
+AnvilConnect.prototype.addScope = addScope
 
 /**
  * Errors
@@ -233,6 +221,61 @@ function getJWKs () {
   })
 }
 AnvilConnect.prototype.getJWKs = getJWKs
+
+/**
+ * Initializes the Anvil Connect admin API functions. Called by constructor.
+ * @private
+ * @method initAdminAPI
+ */
+function initAdminAPI () {
+  this.clients = {
+    list: clients.list.bind(this),
+    get: clients.get.bind(this),
+    create: clients.create.bind(this),
+    update: clients.update.bind(this),
+    delete: clients.delete.bind(this),
+    roles: {
+      list: clientRoles.listRoles.bind(this),
+      add: clientRoles.addRole.bind(this),
+      delete: clientRoles.deleteRole.bind(this)
+    }
+  }
+
+  this.roles = {
+    list: roles.list.bind(this),
+    get: roles.get.bind(this),
+    create: roles.create.bind(this),
+    update: roles.update.bind(this),
+    delete: roles.delete.bind(this),
+    scopes: {
+      list: roleScopes.listScopes.bind(this),
+      add: roleScopes.addScope.bind(this),
+      delete: roleScopes.deleteScope.bind(this)
+    }
+  }
+
+  this.scopes = {
+    list: scopes.list.bind(this),
+    get: scopes.get.bind(this),
+    create: scopes.create.bind(this),
+    update: scopes.update.bind(this),
+    delete: scopes.delete.bind(this)
+  }
+
+  this.users = {
+    list: users.list.bind(this),
+    get: users.get.bind(this),
+    create: users.create.bind(this),
+    update: users.update.bind(this),
+    delete: users.delete.bind(this),
+    roles: {
+      list: userRoles.listRoles.bind(this),
+      add: userRoles.addRole.bind(this),
+      delete: userRoles.deleteRole.bind(this)
+    }
+  }
+}
+AnvilConnect.prototype.initAdminAPI = initAdminAPI
 
 /**
  * Initializes provider-related configurations for this client
@@ -431,6 +474,26 @@ function refresh (options) {
   })
 }
 AnvilConnect.prototype.refresh = refresh
+
+/**
+ * Returns a string representation of the client config options. These can be
+ * used to persist a fully initialized and registered client in any kind of
+ * client store (useful for multi-provider federated signin scenarios).
+ * Usage:
+ *
+ *   ```
+ *   var serializedClient = client.serialize()
+ *   // To deserialize later on:
+ *   var clientConfig = JSON.parse(serializedClient)
+ *   var restoredClient = new AnvilConnect(clientConfig)
+ *   ```
+ * @method serialize
+ * @return {String} JSON representation of the full client config
+ */
+function serialize () {
+  return JSON.stringify(this)
+}
+AnvilConnect.prototype.serialize = serialize
 
 /**
  * Provides a low-level interface to the server's `/token` REST endpoint.
