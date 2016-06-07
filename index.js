@@ -546,7 +546,7 @@ function serialize () {
 AnvilConnect.prototype.serialize = serialize
 
 /**
- * Sends a request to the provider's `/signout` endpoint, to end a user's
+ * Sends a POST request to the provider's `/signout` endpoint, to end a user's
  *   session.
  * @method signout
  * @param idToken {String} ID Token of the user to sign out. Required.
@@ -559,11 +559,10 @@ function signout (idToken, postLogoutRedirectUri) {
   if (!idToken) {
     return Promise.reject(new Error('ID Token required for signout'))
   }
-  var options = {}
-  options.endpoint = 'signout'
-  options.id_token_hint = idToken
+  var params = {}
+  params.id_token_hint = idToken
   if (postLogoutRedirectUri) {
-    options.post_logout_redirect_uri = postLogoutRedirectUri
+    params.post_logout_redirect_uri = postLogoutRedirectUri
   } else {
     var registeredUris = this.registeredPostLogoutUris()
     if (registeredUris.length === 0) {
@@ -571,7 +570,10 @@ function signout (idToken, postLogoutRedirectUri) {
         new Error('A post_logout_redirect_uri parameter is required for signout'))
     }
     // If no post-logout uri option provided explicitly, just pick the first one
-    options.post_logout_redirect_uri = registeredUris[0]
+    params.post_logout_redirect_uri = registeredUris[0]
+  }
+  var options = {
+    endpoint: 'signout'
   }
   var uri = this.authorizationUri(options)
   var self = this
@@ -579,8 +581,8 @@ function signout (idToken, postLogoutRedirectUri) {
     .then(function () {
       return request({
         url: uri,
-        method: 'GET',
-        json: true,
+        method: 'POST',
+        json: params,
         agentOptions: self.agentOptions
       })
     })
