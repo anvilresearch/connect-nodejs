@@ -128,6 +128,10 @@
         })
         return anvil.scope.should.contain('realm')
       })
+      it('should default to no post_logout_redirect_uris', function () {
+        anvil = new AnvilConnect()
+        anvil.registeredPostLogoutUris().length.should.equal(0)
+      })
       it('should set scope from a string', function () {
         anvil = new AnvilConnect({
           scope: 'realm extra'
