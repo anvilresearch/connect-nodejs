@@ -563,14 +563,6 @@ function signout (idToken, postLogoutRedirectUri) {
   params.id_token_hint = idToken
   if (postLogoutRedirectUri) {
     params.post_logout_redirect_uri = postLogoutRedirectUri
-  } else {
-    var registeredUris = this.registeredPostLogoutUris()
-    if (registeredUris.length === 0) {
-      return Promise.reject(
-        new Error('A post_logout_redirect_uri parameter is required for signout'))
-    }
-    // If no post-logout uri option provided explicitly, just pick the first one
-    params.post_logout_redirect_uri = registeredUris[0]
   }
   var options = {
     endpoint: 'signout'
