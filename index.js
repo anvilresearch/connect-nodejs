@@ -25,6 +25,8 @@ var JWT = require('anvil-connect-jwt')
  * @param [options={}] {Object} Options hashmap object
  * @param [options.agentOptions={}] {Object} Optional, passed to `request`
  *   library (see npm's `request` or `request-promise` for documentation)
+ * @param [options.proxy={}] {Object} Optional, passed to `request`
+ *  library (see npm's `request` or `request-promise` for documentation)
  * @param [options.issuer] {String} URL of the OIDC Provider. Required for
  *   most operations.
  * @param [options.scope] {Array|String} Either an array or a space-separated
@@ -56,6 +58,7 @@ function AnvilConnect (options) {
   this.jwks = options.jwks
   this.registration = options.registration
   this.agentOptions = options.agentOptions
+  this.proxy = options.proxy
 
   this.scope = 'openid profile'  // Init to default
   this.addScope(options.scope)   // Set Union any additional scopes passed in
@@ -112,28 +115,32 @@ function discover () {
   uri.pathname = '.well-known/openid-configuration'
   uri = url.format(uri)
 
+  var requestOptions = {
+    url: uri,
+    method: 'GET',
+    json: true,
+    agentOptions: self.agentOptions
+  }
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
+  }
   // return a promise
   return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      // data will be an object if the server returned JSON
-      if (typeof data === 'object') {
-        self.configuration = data
-        resolve(data)
-      // If data is not an object, the server is not serving
-      // .well-known/openid-configuration as expected
-      } else {
-        reject(new Error('Unable to retrieve OpenID Connect configuration'))
-      }
-    })
-    .catch(function (err) {
-      reject(err)
-    })
+    request(requestOptions)
+      .then(function (data) {
+        // data will be an object if the server returned JSON
+        if (typeof data === 'object') {
+          self.configuration = data
+          resolve(data)
+          // If data is not an object, the server is not serving
+          // .well-known/openid-configuration as expected
+        } else {
+          reject(new Error('Unable to retrieve OpenID Connect configuration'))
+        }
+      })
+      .catch(function (err) {
+        reject(err)
+      })
   })
 }
 AnvilConnect.prototype.discover = discover
@@ -198,26 +205,31 @@ function getJWKs () {
   var self = this
   var uri = this.configuration.jwks_uri
 
-  return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'GET',
-      json: true,
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      // make it easier to reference the JWK by use
-      data.keys.forEach(function (jwk) {
-        data[jwk.use] = jwk
-      })
+  var requestOptions = {
+    url: uri,
+    method: 'GET',
+    json: true,
+    agentOptions: self.agentOptions
+  }
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
+  }
 
-      // make the JWK set available on the client
-      self.jwks = data
-      resolve(data)
-    })
-    .catch(function (err) {
-      reject(err)
-    })
+  return new Promise(function (resolve, reject) {
+    request(requestOptions)
+      .then(function (data) {
+        // make it easier to reference the JWK by use
+        data.keys.forEach(function (jwk) {
+          data[jwk.use] = jwk
+        })
+
+        // make the JWK set available on the client
+        self.jwks = data
+        resolve(data)
+      })
+      .catch(function (err) {
+        reject(err)
+      })
   })
 }
 AnvilConnect.prototype.getJWKs = getJWKs
@@ -356,6 +368,9 @@ function register (options) {
     requestOptions.headers = {
       'Authorization': 'Bearer ' + token
     }
+  }
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
   }
   return Promise.resolve()
     .then(function () {
@@ -512,7 +527,7 @@ function refresh (options) {
         return reject(err)
       }
       AccessToken.verify(token.access_token, {
-        key: self.jwks.keys[ 0 ],
+        key: self.jwks.keys[0],
         issuer: self.issuer
       }, function (err) {
         if (err) {
@@ -569,14 +584,19 @@ function signout (idToken, postLogoutRedirectUri) {
   }
   var uri = this.authorizationUri(options)
   var self = this
+  var requestOptions = {
+    url: uri,
+    method: 'POST',
+    json: params,
+    agentOptions: self.agentOptions
+  }
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
+  }
+
   return Promise.resolve()
     .then(function () {
-      return request({
-        url: uri,
-        method: 'POST',
-        json: params,
-        agentOptions: self.agentOptions
-      })
+      return request(requestOptions)
     })
 }
 AnvilConnect.prototype.signout = signout
@@ -656,59 +676,64 @@ function token (options) {
     }
   }
 
+  var requestOptions = {
+    url: uri,
+    method: 'POST',
+    form: formRequestData,
+    json: true,
+    auth: {
+      user: self.client_id,
+      pass: self.client_secret
+    },
+    agentOptions: self.agentOptions
+  }
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
+  }
+
   return new Promise(function (resolve, reject) {
-    request({
-      url: uri,
-      method: 'POST',
-      form: formRequestData,
-      json: true,
-      auth: {
-        user: self.client_id,
-        pass: self.client_secret
-      },
-      agentOptions: self.agentOptions
-    })
-    .then(function (data) {
-      var verifyClaims = {
-        access_claims: function (done) {
-          AccessToken.verify(data.access_token, {
-            key: self.jwks.keys[0],
-            issuer: self.issuer
-          }, function (err, claims) {
-            if (err) { return done(err) }
-            done(null, claims)
-          })
+    request(requestOptions)
+      .then(function (data) {
+        var verifyClaims = {
+          access_claims: function (done) {
+            AccessToken.verify(data.access_token, {
+              key: self.jwks.keys[0],
+              issuer: self.issuer
+            }, function (err, claims) {
+              if (err) { return done(err) }
+              done(null, claims)
+            })
+          }
         }
-      }
-      // when requesting a token using client credentials no ID information is
-      // returned
-      if (formRequestData.grant_type !== 'client_credentials') {
-        verifyClaims.id_claims = function (done) {
-          IDToken.verify(data.id_token, {
-            iss: self.issuer,
-            aud: self.client_id,
-            key: self.jwks.keys[0]
-          }, function (err, token) {
-            if (err) { return done(err) }
-            done(null, token.payload)
-          })
+        // when requesting a token using client credentials no ID information is
+        // returned
+        if (formRequestData.grant_type !== 'client_credentials') {
+          verifyClaims.id_claims = function (done) {
+            IDToken.verify(data.id_token, {
+              iss: self.issuer,
+              aud: self.client_id,
+              key: self.jwks.keys[0]
+            }, function (err, token) {
+              if (err) { return done(err) }
+              done(null, token.payload)
+            })
+          }
         }
-      }
-      // verify tokens
-      async.parallel(verifyClaims, function (err, result) {
-        if (err) {
-          return reject(err)
-        }
+        // verify tokens
+        async.parallel(verifyClaims, function (err, result) {
+          if (err) {
+            return reject(err)
+          }
 
-        data.id_claims = result.id_claims
-        data.access_claims = result.access_claims
+          data.id_claims = result.id_claims
+          data.access_claims = result.access_claims
 
-        resolve(data)
+          resolve(data)
+        })
       })
-    })
-    .catch(function (err) {
-      reject(err)
-    })
+      .catch(function (err) {
+        reject(err)
+      })
   })
 }
 AnvilConnect.prototype.token = token
@@ -723,26 +748,32 @@ AnvilConnect.prototype.token = token
  *   Error when the access token is missing)
  */
 function userInfo (options) {
+  var self = this
   options = options || {}
-  var uri = this.configuration.userinfo_endpoint
-  var agentOptions = this.agentOptions
+  var uri = self.configuration.userinfo_endpoint
+  var agentOptions = self.agentOptions
 
   if (!options.token) {
     return Promise.reject(new Error('Missing access token'))
+  }
+  var requestOptions = {
+    url: uri,
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + options.token
+    },
+    json: true,
+    agentOptions: agentOptions
+  }
+
+  if (self.proxy) {
+    requestOptions.proxy = self.proxy
   }
   // Access token is present
   return Promise.resolve()
     .then(function () {
       // return a request promise
-      return request({
-        url: uri,
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer ' + options.token
-        },
-        json: true,
-        agentOptions: agentOptions
-      })
+      return request(requestOptions)
     })
 }
 AnvilConnect.prototype.userInfo = userInfo
